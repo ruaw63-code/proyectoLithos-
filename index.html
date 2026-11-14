@@ -1478,13 +1478,16 @@ const DEV_H='1yuyn3sd7rc',pinOk=v=>h53('lithos-dev|'+String(v))===DEV_H;
 const BT_H=["16bwmmghe3u", "11czqbad2nl", "22vo50htr7", "1d6zl9yrto3", "1vu5bsbj8y3", "15mufyea9ps", "xqt8s9jnjg", "1onajqkb8wx", "29mibtoexnt", "sbd6ltq5aq", "22h14vcsdbf", "pi8u2b6x9m", "12lb45cn1j0", "1qz31y84n3z", "22jh9vm96e8"];
 /* Lote de armas de Fundador por código (posición del código en BT_H). 15 códigos: los 10 primeros dan 1 arma y los 5 últimos dan 2; cada arma aparece exactamente 2 veces en total. */
 const FD_SETS=[['sword'],['axe'],['spear'],['bow'],['staff'],['dagger'],['hammer'],['pistol'],['shotgun'],['wand'],['spear','wand'],['sword','bow'],['axe','pistol'],['dagger','shotgun'],['hammer','staff']];
-let btIdx=-1,btCode='';
-const codeKind=v=>{const n=String(v).toUpperCase().replace(/[^A-Z0-9]/g,'');if(n.length>=4&&n.length<=14&&pinOk(n))return'dev';if(n.length===11){const i=BT_H.indexOf(h53('lithos-beta|'+n));if(i>=0){btIdx=i;btCode=n;return'beta'}
-  if(n.startsWith('LTH')){const b=n.slice(3,8),j=parseInt(b[0],36);if(j>=0&&j<FD_SETS.length&&n.slice(8)===dropSig(b)){btIdx=j;btCode=n;return'beta'}}}return''};
+let btIdx=-1,btCode='',btSet=null;
+const codeKind=v=>{const n=String(v).toUpperCase().replace(/[^A-Z0-9]/g,'');if(n.length>=4&&n.length<=14&&pinOk(n))return'dev';if(n.length===11){const i=BT_H.indexOf(h53('lithos-beta|'+n));if(i>=0){btIdx=i;btCode=n;btSet=null;return'beta'}
+  if(n.startsWith('LTH')){const b=n.slice(3,8),sg=n.slice(8);
+   if(sg===dropSig2(b)){const hi=parseInt(b[0],32),lo=parseInt(b[1],32),m=hi*32+lo;if(m>0&&m<1024&&bits(m)<=2){btIdx=-1;btCode=n;btSet=FD_IDS.filter((w,k)=>m&(1<<k));return'beta'}}
+   const j=parseInt(b[0],36);if(j>=0&&j<FD_SETS.length&&sg===dropSig(b)){btIdx=j;btCode=n;btSet=null;return'beta'}}}return''};
 /* ---- Códigos de Fundador ALEATORIOS: el juego da 1 cada vez que superas un piso múltiplo de 10 en la mazmorra ---- */
 const FD_AL='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const dropSig=b=>(h53('lithos-drop|'+b)+'000').slice(0,3).toUpperCase();
-function fdCodeMake(idx){let r='';for(let i=0;i<4;i++)r+=FD_AL[Math.random()*FD_AL.length|0];const b=idx.toString(36).toUpperCase()+r,c=b+dropSig(b);return'LTH-'+c.slice(0,4)+'-'+c.slice(4)}
+const dropSig=b=>(h53('lithos-drop|'+b)+'000').slice(0,3).toUpperCase(),dropSig2=b=>(h53('lithos-drop2|'+b)+'000').slice(0,3).toUpperCase(),bits=m=>{let c=0;for(;m;m>>=1)c+=m&1;return c};
+const fdEW=e=>e.w||FD_SETS[e.s]||[];
+function fdCodeMake(ws){const m=ws.reduce((a,w)=>a|(1<<FD_IDS.indexOf(w)),0);let r='';for(let i=0;i<3;i++)r+=FD_AL[Math.random()*FD_AL.length|0];const b=(m>>5).toString(32).toUpperCase()+(m&31).toString(32).toUpperCase()+r,c=b+dropSig2(b);return'LTH-'+c.slice(0,4)+'-'+c.slice(4)}
 const fdF=()=>pref.fd=pref.fd&&typeof pref.fd==='object'?pref.fd:{};
 function fdInbox(){const F=fdF();if(!Array.isArray(F.inbox))F.inbox=[];if(!Array.isArray(F.used))F.used=[];return F.inbox}
 const fdNorm=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -1492,9 +1495,13 @@ const fdUsed=c=>{fdInbox();return pref.fd.used.includes(fdNorm(c))};
 function fdMarkUsed(){if(!btCode)return;fdInbox();const F=pref.fd;if(!F.used.includes(btCode))F.used.push(btCode);F.inbox.forEach(e=>{if(fdNorm(e.c)===btCode)e.u=1})}
 let fdMileAt=0,fdMileFl=0;
 function fdMile(fl){if(!fl||fl%10)return;if(window.DG&&DG.cheated)return;if(fl===fdMileFl&&Date.now()-fdMileAt<5000)return;fdMileFl=fl;fdMileAt=Date.now();
- const F=fdF();fdInbox();const own=F.own||{},pend=new Set();F.inbox.forEach(e=>{if(!e.u)(FD_SETS[e.s]||[]).forEach(w=>pend.add(w))});
- const cand=[];FD_SETS.forEach((st,i)=>{if(st.some(w=>!own[w]&&!pend.has(w)))cand.push(i)});if(!cand.length)return;
- const idx=cand[Math.random()*cand.length|0];F.inbox.unshift({c:fdCodeMake(idx),f:fl,s:idx,u:0,n:1});if(F.inbox.length>30)F.inbox.length=30;savePref();
+ const F=fdF();fdInbox();if(!Array.isArray(F.ms))F.ms=[];if(F.ms.includes(fl))return; /* cada piso 10, 20, 30… da su código UNA sola vez por partida guardada */
+ const own=F.own||{},pend=new Set();F.inbox.forEach(e=>{if(!e.u)fdEW(e).forEach(w=>pend.add(w))});
+ const miss=FD_IDS.filter(w=>!own[w]&&!pend.has(w));if(!miss.length)return;
+ /* reparto: cada código da 1 o 2 armas al azar de las que faltan, de modo que las 10 estén completas al superar el piso 70 */
+ const r=Math.max(1,8-fl/10),M=miss.length,ok=[];[1,2].forEach(c=>{if(c<=M&&M-c<=2*(r-1))ok.push(c)});
+ const c=ok.length?ok[Math.random()*ok.length|0]:Math.min(2,M),pool=miss.slice(),pick=[];for(let k=0;k<c;k++)pick.push(pool.splice(Math.random()*pool.length|0,1)[0]);
+ F.ms.push(fl);F.inbox.unshift({c:fdCodeMake(pick),f:fl,w:pick,u:0,n:1});if(F.inbox.length>30)F.inbox.length=30;savePref();
  try{toast('🏺 ¡Conseguiste un código de Fundador! Lo verás al terminar la mazmorra')}catch(e){}}
 function fdCopy2(t,ok){try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0;top:0;left:0';document.body.appendChild(a);a.focus();a.select();try{a.setSelectionRange(0,999)}catch(e){}document.execCommand('copy');a.remove();ok()}catch(e){toast('Código: '+t)}}
 function fdCopy(t){const ok=()=>toast('📋 Código copiado');try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,()=>fdCopy2(t,ok));return}}catch(e){}fdCopy2(t,ok)}
@@ -1502,13 +1509,13 @@ function fdResultsHook(box){const F=pref.fd;if(!F||!Array.isArray(F.inbox))retur
  nw.forEach(e=>{const d=document.createElement('div');d.style.cssText='border:2px solid #ffe9a8;border-radius:10px;padding:8px;margin:8px 0;text-align:center';
   const t=document.createElement('div');t.textContent='🏺 ¡Código de Fundador por superar el piso '+e.f+'!';t.style.fontWeight='bold';
   const k=document.createElement('div');k.textContent=e.c;k.style.cssText='font:bold 20px monospace;letter-spacing:2px;margin:6px 0;color:#ffe9a8;user-select:text;-webkit-user-select:text';
-  const g=document.createElement('div');g.textContent='Te da: '+(FD_SETS[e.s]||[]).map(w=>FD_N[w]||w).join(' y ');g.style.fontSize='13px';
+  const g=document.createElement('div');g.textContent='Te da: '+fdEW(e).map(w=>FD_N[w]||w).join(' y ');g.style.fontSize='13px';
   const h=document.createElement('div');h.textContent='Pégalo en «🔐 Código de acceso» del menú principal. Queda guardado ahí por si lo quieres canjear después.';h.style.cssText='font-size:11px;opacity:.8;margin-top:4px';
   const b=document.createElement('button');b.className='b';b.textContent='📋 Copiar código';b.style.margin='6px 0';b.onclick=()=>fdCopy(e.c);
   d.append(t,k,g,b,h);c.insertBefore(d,b0);e.n=0});try{savePref()}catch(e){}}
 function fdInboxUi(b,inp,go){const F=pref.fd;if(!F||!Array.isArray(F.inbox))return;const L=F.inbox.filter(e=>!e.u);if(!L.length)return;
  const w=el('div','');w.style.cssText='margin-top:10px;border-top:1px solid rgba(255,255,255,.2);padding-top:8px';const h=el('div','','🏺 Tus códigos de Fundador (sin canjear)');h.style.cssText='font-weight:bold;text-align:center;margin-bottom:6px';w.appendChild(h);
- L.forEach(e=>{const r=el('div','');r.style.cssText='background:rgba(0,0,0,.25);border-radius:8px;padding:6px;margin:4px 0;text-align:center';const c=el('div','',e.c);c.style.cssText='font:bold 16px monospace;letter-spacing:1px';const g=el('div','','Te da: '+(FD_SETS[e.s]||[]).map(x=>FD_N[x]||x).join(' y '));g.style.cssText='font-size:12px;opacity:.85';const row=el('div','');row.style.cssText='display:flex;gap:6px;margin-top:4px';
+ L.forEach(e=>{const r=el('div','');r.style.cssText='background:rgba(0,0,0,.25);border-radius:8px;padding:6px;margin:4px 0;text-align:center';const c=el('div','',e.c);c.style.cssText='font:bold 16px monospace;letter-spacing:1px';const g=el('div','','Te da: '+fdEW(e).map(x=>FD_N[x]||x).join(' y '));g.style.cssText='font-size:12px;opacity:.85';const row=el('div','');row.style.cssText='display:flex;gap:6px;margin-top:4px';
   row.append(bt('📋 Copiar',()=>fdCopy(e.c),'flex:1'),bt('✔ Canjear',()=>{inp.value=fdNorm(e.c);go()},'flex:1'));r.append(c,g,row);w.appendChild(r)});b.appendChild(w)}
 let cmdAuth=false,cmdLock=0,cmdTry=0,cmdLog='',cmdBT=0,cmdTab=0,cmdHist=[],cmdKind=null;
 function openCmd(){if(cmdAuth&&netc())cmdAuth=false;$('cmd').style.display='flex';renderCmd()}
@@ -1527,7 +1534,7 @@ const FD_N={sword:'🗡️ Espada',axe:'🪓 Hacha pesada',spear:'🔱 Lanza',bo
 const fdTxt=()=>{const o=(pref.fd&&pref.fd.own)||{},ids=Object.keys(o).filter(k=>o[k]);return ids.length+(ids.length===1?' arma':' armas')+' de Fundador ('+ids.map(k=>FD_N[k]||k).join(' y ')+')'};
 function fdPurge(id){try{const L=pref.dgi;if(!L)return;if(L.fdw)delete L.fdw[id];if(Array.isArray(L.bag))L.bag=L.bag.filter(it=>!(it&&it.k==='w'&&it.w&&it.w.fd&&it.w.id===id));if(L.eq&&Array.isArray(L.eq.w))L.eq.w=L.eq.w.map(w=>w&&w.fd&&w.id===id?null:w);if(!L.eq.w.some(Boolean)&&typeof winst==='function')L.eq.w[0]=winst('sword',0,null)}catch(e){}}
 let fdLast=[];
-function fdGrantAll(){const F=pref.fd=pref.fd&&typeof pref.fd==='object'?pref.fd:{};const set=FD_SETS[btIdx]||[];F.own=F.own||{};F.seal=F.seal||{};const gain=[];let trim=false;
+function fdGrantAll(){const F=pref.fd=pref.fd&&typeof pref.fd==='object'?pref.fd:{};const set=btSet||FD_SETS[btIdx]||[];F.own=F.own||{};F.seal=F.seal||{};const gain=[];let trim=false;
  if(F.granted&&!F.v2){/* canje antiguo con las 10 armas: se recorta al lote de este código */FD_IDS.forEach(id=>{if(F.own[id]&&!set.includes(id)){delete F.own[id];delete F.seal[id];if(F.keep)delete F.keep[id];fdPurge(id);trim=true}})}
  set.forEach(id=>{if(!F.own[id]){F.own[id]=1;if(F.seal[id]===undefined)F.seal[id]=0;gain.push(id)}});
  F.pet=1;F.granted=1;F.v2=1;F.code=btIdx;if(!pref.own.includes('founder'))pref.own.push('founder');savePref();try{DG.fdSync()}catch(e){}return{gain,trim}}
