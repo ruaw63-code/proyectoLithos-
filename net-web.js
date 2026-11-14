@@ -141,7 +141,7 @@
           stage = 'room';
           try { peer.socket.on('message', function (m) { var t = m && m.type; dg.m[t] = (dg.m[t] || 0) + 1; if (t === 'ANSWER') dg.ans = 1; }); } catch (e) { }
           var conn;
-          try { conn = c.conn = peer.connect(PREFIX + code, { reliable: true, serialization: 'none' }); } catch (e) { clearTimeout(to); fail('Error al abrir la conexión: ' + (e && e.message || e)); return; }
+          try { conn = c.conn = peer.connect(PREFIX + code, { reliable: true, serialization: 'raw' }); } catch (e) { clearTimeout(to); fail('Error al abrir la conexión: ' + (e && e.message || e)); return; }
           var hook = function (n) { try { var pc = conn.peerConnection; if (pc) dg.pc = 1; if (!pc) { if (n < 40) setTimeout(function () { hook(n + 1); }, 150); return; }
             pc.addEventListener('iceconnectionstatechange', function () { dg.st = pc.iceConnectionState; console.log('[lithos] ICE:', dg.st); });
             pc.addEventListener('signalingstatechange', function () { if (pc.remoteDescription) dg.ans = 1; });
