@@ -127,8 +127,9 @@
       loadLib().then(function () {
         if (C !== c) return;
         var peer = c.peer = new window.Peer(undefined, CFG);
-        var stage = 'signal';
-        var to = setTimeout(function () { fail(stage === 'signal' ? 'No se pudo contactar el servidor de salas (PeerJS). Revisa tu internet e intenta otra vez' : 'Se encontró la sala pero no se pudo abrir la conexión entre los dos (red/TURN). Prueba con WiFi o revisa el TURN'); }, 45000);
+        var stage = 'signal', dg = { st: 'sin-iniciar', h: 0, s: 0, r: 0, e: '', ans: 0 };
+        var dgs = function () { return ' [diag ICE=' + dg.st + ' local:host' + dg.h + '/stun' + dg.s + '/turn' + dg.r + ' respuesta=' + (dg.ans ? 'si' : 'NO') + (dg.e ? ' err=' + dg.e : '') + ']'; };
+        var to = setTimeout(function () { fail(stage === 'signal' ? 'No se pudo contactar el servidor de salas (PeerJS). Revisa tu internet e intenta otra vez' : 'No se pudo abrir la conexión entre los dos.' + dgs()); }, 45000);
         peer.on('error', function (err) {
           clearTimeout(to);
           var t = err && err.type;
@@ -138,7 +139,13 @@
         peer.on('open', function () {
           stage = 'room';
           var conn = c.conn = peer.connect(PREFIX + code, { reliable: true, serialization: 'none' });
-          setTimeout(function () { try { var pc = conn.peerConnection; if (pc) pc.addEventListener('iceconnectionstatechange', function () { console.log('[lithos] ICE:', pc.iceConnectionState); }); } catch (e) { } }, 300);
+          var hook = function (n) { try { var pc = conn.peerConnection; if (!pc) { if (n < 40) setTimeout(function () { hook(n + 1); }, 150); return; }
+            pc.addEventListener('iceconnectionstatechange', function () { dg.st = pc.iceConnectionState; console.log('[lithos] ICE:', dg.st); });
+            pc.addEventListener('signalingstatechange', function () { if (pc.remoteDescription) dg.ans = 1; });
+            pc.addEventListener('icecandidate', function (e) { var t = e.candidate && e.candidate.type; if (t === 'host') dg.h++; else if (t === 'srflx') dg.s++; else if (t === 'relay') dg.r++; });
+            pc.addEventListener('icecandidateerror', function (e) { dg.e = (e.errorCode || '') + ''; });
+          } catch (e) { } };
+          hook(0);
           conn.on('open', function () {
             clearTimeout(to); c.last = Date.now();
             c.tick = setInterval(function () {
