@@ -1471,11 +1471,45 @@ function spLoop(){if(!spOn)return;const o=ctx,t=performance.now();
   else{ctx.translate(80,92);ctx.scale(1.5,1.5);ctx.rotate(-Math.PI/2);dKing(t,1,'#4f86e6',s)}});
  ctx=o;requestAnimationFrame(spLoop)}
 /* ---------- zona de comandos: PIN de desarrollo + códigos de betatester ---------- */
-const PIN_H=(()=>{let h=7;for(const c of'6311')h=(h*31+c.charCodeAt(0))>>>0;return h})(),pinOk=s=>{let h=7;for(const c of String(s))h=(h*31+c.charCodeAt(0))>>>0;return h===PIN_H};
+/* clave de comandos: solo se guarda su huella (no la clave) */
 /* Códigos de betatester: solo se guardan sus huellas (no los códigos). Cada código otorga el distintivo, NO da acceso a los comandos. */
 const h53=(s,seed=0)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<s.length;i++){ch=s.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(36)};
+const DEV_H='1yuyn3sd7rc',pinOk=v=>h53('lithos-dev|'+String(v))===DEV_H;
 const BT_H=["16bwmmghe3u", "11czqbad2nl", "22vo50htr7", "1d6zl9yrto3", "1vu5bsbj8y3", "15mufyea9ps", "xqt8s9jnjg", "1onajqkb8wx", "29mibtoexnt", "sbd6ltq5aq", "22h14vcsdbf", "pi8u2b6x9m", "12lb45cn1j0", "1qz31y84n3z", "22jh9vm96e8"];
-const codeKind=v=>{const n=String(v).toUpperCase().replace(/[^A-Z0-9]/g,'');if(/^\d{4}$/.test(n)&&pinOk(n))return'dev';if(n.length===11&&BT_H.includes(h53('lithos-beta|'+n)))return'beta';return''};
+/* Lote de armas de Fundador por código (posición del código en BT_H). 15 códigos: los 10 primeros dan 1 arma y los 5 últimos dan 2; cada arma aparece exactamente 2 veces en total. */
+const FD_SETS=[['sword'],['axe'],['spear'],['bow'],['staff'],['dagger'],['hammer'],['pistol'],['shotgun'],['wand'],['spear','wand'],['sword','bow'],['axe','pistol'],['dagger','shotgun'],['hammer','staff']];
+let btIdx=-1,btCode='';
+const codeKind=v=>{const n=String(v).toUpperCase().replace(/[^A-Z0-9]/g,'');if(n.length>=4&&n.length<=14&&pinOk(n))return'dev';if(n.length===11){const i=BT_H.indexOf(h53('lithos-beta|'+n));if(i>=0){btIdx=i;btCode=n;return'beta'}
+  if(n.startsWith('LTH')){const b=n.slice(3,8),j=parseInt(b[0],36);if(j>=0&&j<FD_SETS.length&&n.slice(8)===dropSig(b)){btIdx=j;btCode=n;return'beta'}}}return''};
+/* ---- Códigos de Fundador ALEATORIOS: el juego da 1 cada vez que superas un piso múltiplo de 10 en la mazmorra ---- */
+const FD_AL='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const dropSig=b=>(h53('lithos-drop|'+b)+'000').slice(0,3).toUpperCase();
+function fdCodeMake(idx){let r='';for(let i=0;i<4;i++)r+=FD_AL[Math.random()*FD_AL.length|0];const b=idx.toString(36).toUpperCase()+r,c=b+dropSig(b);return'LTH-'+c.slice(0,4)+'-'+c.slice(4)}
+const fdF=()=>pref.fd=pref.fd&&typeof pref.fd==='object'?pref.fd:{};
+function fdInbox(){const F=fdF();if(!Array.isArray(F.inbox))F.inbox=[];if(!Array.isArray(F.used))F.used=[];return F.inbox}
+const fdNorm=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+const fdUsed=c=>{fdInbox();return pref.fd.used.includes(fdNorm(c))};
+function fdMarkUsed(){if(!btCode)return;fdInbox();const F=pref.fd;if(!F.used.includes(btCode))F.used.push(btCode);F.inbox.forEach(e=>{if(fdNorm(e.c)===btCode)e.u=1})}
+let fdMileAt=0,fdMileFl=0;
+function fdMile(fl){if(!fl||fl%10)return;if(window.DG&&DG.cheated)return;if(fl===fdMileFl&&Date.now()-fdMileAt<5000)return;fdMileFl=fl;fdMileAt=Date.now();
+ const F=fdF();fdInbox();const own=F.own||{},pend=new Set();F.inbox.forEach(e=>{if(!e.u)(FD_SETS[e.s]||[]).forEach(w=>pend.add(w))});
+ const cand=[];FD_SETS.forEach((st,i)=>{if(st.some(w=>!own[w]&&!pend.has(w)))cand.push(i)});if(!cand.length)return;
+ const idx=cand[Math.random()*cand.length|0];F.inbox.unshift({c:fdCodeMake(idx),f:fl,s:idx,u:0,n:1});if(F.inbox.length>30)F.inbox.length=30;savePref();
+ try{toast('🏺 ¡Conseguiste un código de Fundador! Lo verás al terminar la mazmorra')}catch(e){}}
+function fdCopy2(t,ok){try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0;top:0;left:0';document.body.appendChild(a);a.focus();a.select();try{a.setSelectionRange(0,999)}catch(e){}document.execCommand('copy');a.remove();ok()}catch(e){toast('Código: '+t)}}
+function fdCopy(t){const ok=()=>toast('📋 Código copiado');try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,()=>fdCopy2(t,ok));return}}catch(e){}fdCopy2(t,ok)}
+function fdResultsHook(box){const F=pref.fd;if(!F||!Array.isArray(F.inbox))return;const nw=F.inbox.filter(e=>e.n&&!e.u);if(!nw.length)return;const c=box.querySelector('.dgc'),b0=c&&c.querySelector('button');if(!c)return;
+ nw.forEach(e=>{const d=document.createElement('div');d.style.cssText='border:2px solid #ffe9a8;border-radius:10px;padding:8px;margin:8px 0;text-align:center';
+  const t=document.createElement('div');t.textContent='🏺 ¡Código de Fundador por superar el piso '+e.f+'!';t.style.fontWeight='bold';
+  const k=document.createElement('div');k.textContent=e.c;k.style.cssText='font:bold 20px monospace;letter-spacing:2px;margin:6px 0;color:#ffe9a8;user-select:text;-webkit-user-select:text';
+  const g=document.createElement('div');g.textContent='Te da: '+(FD_SETS[e.s]||[]).map(w=>FD_N[w]||w).join(' y ');g.style.fontSize='13px';
+  const h=document.createElement('div');h.textContent='Pégalo en «🔐 Código de acceso» del menú principal. Queda guardado ahí por si lo quieres canjear después.';h.style.cssText='font-size:11px;opacity:.8;margin-top:4px';
+  const b=document.createElement('button');b.className='b';b.textContent='📋 Copiar código';b.style.margin='6px 0';b.onclick=()=>fdCopy(e.c);
+  d.append(t,k,g,b,h);c.insertBefore(d,b0);e.n=0});try{savePref()}catch(e){}}
+function fdInboxUi(b,inp,go){const F=pref.fd;if(!F||!Array.isArray(F.inbox))return;const L=F.inbox.filter(e=>!e.u);if(!L.length)return;
+ const w=el('div','');w.style.cssText='margin-top:10px;border-top:1px solid rgba(255,255,255,.2);padding-top:8px';const h=el('div','','🏺 Tus códigos de Fundador (sin canjear)');h.style.cssText='font-weight:bold;text-align:center;margin-bottom:6px';w.appendChild(h);
+ L.forEach(e=>{const r=el('div','');r.style.cssText='background:rgba(0,0,0,.25);border-radius:8px;padding:6px;margin:4px 0;text-align:center';const c=el('div','',e.c);c.style.cssText='font:bold 16px monospace;letter-spacing:1px';const g=el('div','','Te da: '+(FD_SETS[e.s]||[]).map(x=>FD_N[x]||x).join(' y '));g.style.cssText='font-size:12px;opacity:.85';const row=el('div','');row.style.cssText='display:flex;gap:6px;margin-top:4px';
+  row.append(bt('📋 Copiar',()=>fdCopy(e.c),'flex:1'),bt('✔ Canjear',()=>{inp.value=fdNorm(e.c);go()},'flex:1'));r.append(c,g,row);w.appendChild(r)});b.appendChild(w)}
 let cmdAuth=false,cmdLock=0,cmdTry=0,cmdLog='',cmdBT=0,cmdTab=0,cmdHist=[],cmdKind=null;
 function openCmd(){if(cmdAuth&&netc())cmdAuth=false;$('cmd').style.display='flex';renderCmd()}
 function closeCmd(){$('cmd').style.display='none';cmdBT=0} // cerrar NO pierde el acceso; solo el comando 'salir' lo cierra
@@ -1485,19 +1519,28 @@ function btCard(mode){const c=el('div','btcard'+(mode===0?' mini':''));
  if(mode===0){const n=el('span','rgbn',BTN+' Betatester');c.appendChild(n);c.appendChild(document.createTextNode(' · distintivo activo'));return c}
  c.appendChild(el('div','bk','RECONOCIMIENTO'));const n=el('div','bn');n.appendChild(el('span','rgbn',BTN+' '+pname()));c.appendChild(n);c.appendChild(el('div','bt2','BETATESTER'));
  c.appendChild(el('p','',mode===1?'Gracias por acompañarnos durante la beta. Tu tiempo, tus reportes y tu criterio están ayudando a que ProyectoLithos sea mejor. Este distintivo es nuestro agradecimiento y muestra de respeto por tu aporte.':mode===3?'Tu distintivo ya estaba activo. Gracias por seguir apoyando el desarrollo de ProyectoLithos; hoy se suman tus regalos de Fundador.':'Tu distintivo de Betatester ya está activo. Gracias por seguir apoyando el desarrollo de ProyectoLithos.'));
- if(mode===1||mode===3)c.appendChild(el('p','','🏺 Regalos de Fundador, únicos y solo de la beta: 10 armas de Fundador para la mazmorra (una de cada tipo), que encontrarás en su propia pestaña «🏺 Fundador» al preparar la mazmorra; si se pierden, regresan a tu Armería a los 10 minutos, el aspecto «Rey Fundador» y el Fénix del Fundador, una mascota que te acompaña en cada mazmorra.'));
- c.appendChild(el('p','','Tu nombre se mostrará en color RGB con el símbolo '+BTN+' y el título «Betatester» sobre tu Rey. Puedes llevarlo o quitarlo en 🏆 Logros → Mis títulos.'));return c}
+ if(fdLast.length)c.appendChild(el('p','','🏺 Este código te dio: '+fdLast.map(k=>FD_N[k]||k).join(' y ')+(mode===1?', el aspecto «Rey Fundador» y el Fénix del Fundador (una mascota que te acompaña en cada mazmorra)':'')+'. Encontrarás las armas en la pestaña «🏺 Fundador» al preparar la mazmorra; si se pierden, regresan a tu Armería a los 10 minutos. En total tienes '+fdTxt()+'.'));
+ else if(mode===2)c.appendChild(el('p','','🏺 Este código no añadió armas nuevas porque ya las tenías. En total tienes '+fdTxt()+'.'));
+ if(mode===1)c.appendChild(el('p','','Tu nombre se mostrará en color RGB con el símbolo '+BTN+' y el título «Betatester» sobre tu Rey. Puedes llevarlo o quitarlo en 🏆 Logros → Mis títulos.'));return c}
 const FD_IDS=['sword','axe','spear','bow','staff','dagger','hammer','pistol','shotgun','wand'];
-function fdGrantAll(){const F=pref.fd=pref.fd&&typeof pref.fd==='object'?pref.fd:{};if(F.granted)return false;F.own=F.own||{};F.seal=F.seal||{};FD_IDS.forEach(id=>{F.own[id]=1;if(F.seal[id]===undefined)F.seal[id]=0});F.pet=1;F.granted=1;if(!pref.own.includes('founder'))pref.own.push('founder');savePref();try{DG.fdSync()}catch(e){}return true}
-function redeemBT(){const had=!!pref.bt;if(!had){pref.bt=Date.now();pref.title='beta'}const gave=fdGrantAll();savePref();cmdBT=had?(gave?3:2):1;try{AU.sfx('win')}catch(e){}setMenu();renderCmd()}
+const FD_N={sword:'🗡️ Espada',axe:'🪓 Hacha pesada',spear:'🔱 Lanza',bow:'🏹 Arco',staff:'🔮 Bastón mágico',dagger:'🔪 Daga veloz',hammer:'🔨 Martillo sísmico',pistol:'🔫 Pistola',shotgun:'💥 Escopeta',wand:'🪄 Varita'};
+const fdTxt=()=>{const o=(pref.fd&&pref.fd.own)||{},ids=Object.keys(o).filter(k=>o[k]);return ids.length+(ids.length===1?' arma':' armas')+' de Fundador ('+ids.map(k=>FD_N[k]||k).join(' y ')+')'};
+function fdPurge(id){try{const L=pref.dgi;if(!L)return;if(L.fdw)delete L.fdw[id];if(Array.isArray(L.bag))L.bag=L.bag.filter(it=>!(it&&it.k==='w'&&it.w&&it.w.fd&&it.w.id===id));if(L.eq&&Array.isArray(L.eq.w))L.eq.w=L.eq.w.map(w=>w&&w.fd&&w.id===id?null:w);if(!L.eq.w.some(Boolean)&&typeof winst==='function')L.eq.w[0]=winst('sword',0,null)}catch(e){}}
+let fdLast=[];
+function fdGrantAll(){const F=pref.fd=pref.fd&&typeof pref.fd==='object'?pref.fd:{};const set=FD_SETS[btIdx]||[];F.own=F.own||{};F.seal=F.seal||{};const gain=[];let trim=false;
+ if(F.granted&&!F.v2){/* canje antiguo con las 10 armas: se recorta al lote de este código */FD_IDS.forEach(id=>{if(F.own[id]&&!set.includes(id)){delete F.own[id];delete F.seal[id];if(F.keep)delete F.keep[id];fdPurge(id);trim=true}})}
+ set.forEach(id=>{if(!F.own[id]){F.own[id]=1;if(F.seal[id]===undefined)F.seal[id]=0;gain.push(id)}});
+ F.pet=1;F.granted=1;F.v2=1;F.code=btIdx;if(!pref.own.includes('founder'))pref.own.push('founder');savePref();try{DG.fdSync()}catch(e){}return{gain,trim}}
+function redeemBT(){const had=!!pref.bt;if(!had){pref.bt=Date.now();pref.title='beta'} /* si ya tenía el distintivo, título y nombre RGB no se tocan */
+ const r=fdGrantAll();fdLast=r.gain;fdMarkUsed();savePref();cmdBT=had?((r.gain.length||r.trim)?3:2):1;try{AU.sfx('win')}catch(e){}setMenu();renderCmd()}
 function renderCmd(){const b=$('cmb');b.innerHTML='';
  if(cmdBT){b.appendChild(btCard(cmdBT));b.appendChild(bt('Continuar',()=>{cmdBT=0;renderCmd()},'width:100%'));return}
  if(!cmdAuth){if(pref.bt)b.appendChild(btCard(0));b.appendChild(el('div','','Introduce tu código de acceso:'));const i=el('input');i.type='password';i.maxLength=14;i.placeholder='••••';i.autocomplete='off';i.autocapitalize='characters';i.spellcheck=false;i.style.textAlign='center';i.style.letterSpacing='4px';b.appendChild(i);const m=el('div','',cmdLog);m.style.cssText='color:#ff9a9a;text-align:center;min-height:18px';b.appendChild(m);
   const go=()=>{const w=Math.ceil((cmdLock-Date.now())/1000);if(w>0){cmdLog='🔒 Espera '+w+' s';renderCmd();return}const k=codeKind(i.value);
    if(k==='dev'){if(netc()){cmdLog='Los comandos solo los puede usar el anfitrión o en partida individual.';renderCmd();return}cmdAuth=true;cmdTry=0;cmdLog='';renderCmd()}
-   else if(k==='beta'){cmdTry=0;cmdLog='';redeemBT()}
+   else if(k==='beta'){cmdTry=0;cmdLog='';if(fdUsed(btCode)){cmdLog='✅ Ese código ya fue canjeado';renderCmd();return}redeemBT()}
    else{i.value='';cmdLog='❌ Código incorrecto';if(++cmdTry>=3){cmdTry=0;cmdLock=Date.now()+30000;cmdLog='🔒 Demasiados intentos: espera 30 s'}renderCmd()}};
-  i.onkeydown=e=>{if(e.key==='Enter')go();e.stopPropagation()};i.oninput=()=>{i.value=i.value.replace(/[^A-Za-z0-9-]/g,'');if(/^\d{4}$/.test(i.value))go()};b.appendChild(bt('Entrar',go,'width:100%'));b.appendChild(bt('👁 Mostrar / ocultar',()=>{i.type=i.type==='password'?'text':'password'},'width:100%;margin-top:4px;padding:4px;font-size:11px;opacity:.8'));setTimeout(()=>i.focus(),50);return}
+  i.onkeydown=e=>{if(e.key==='Enter')go();e.stopPropagation()};i.oninput=()=>{i.value=i.value.replace(/[^A-Za-z0-9-]/g,'');};b.appendChild(bt('Entrar',go,'width:100%'));b.appendChild(bt('👁 Mostrar / ocultar',()=>{i.type=i.type==='password'?'text':'password'},'width:100%;margin-top:4px;padding:4px;font-size:11px;opacity:.8'));fdInboxUi(b,i,go);setTimeout(()=>i.focus(),50);return}
  const CMD_UI={dg:[
  ['🧍 Jugador',[['❤️ Vida','vida'],['🛡️ Dios','dios'],['🪙 +500','oro 500'],['🪙 +5000','oro 5000'],['❤️ Vida máx. 300','vidamax 300'],['🔰 Escudo','escudo'],['⏳ Inmune 10 s','inmune 10'],['⚡ Vel. x1.5','velocidad 1.5'],['💪 Daño x2','dano 2'],['🐾 Curar mascotas','curarmascotas'],['✏️ Velocidad…','velocidad '],['✏️ Daño…','dano ']]],
  ['🗝️ Mazmorra',[['⏭️ Siguiente piso','saltar'],['🔢 Ir al piso…','piso '],['🔁 Reiniciar piso','reiniciar'],['🏁 Punto de salida','salida'],['🧭 Mapa completo','mapa'],['🚪 Abrir puertas','abrir'],['📍 Ir al inicio','ir inicio'],['👹 Ir al jefe','ir jefe'],['🎁 Ir al cofre','ir cofre'],['🚪 Ir a la salida','ir salida'],['🛒 Ir a la tienda','ir tienda'],['🔮 Ir a la mesa','ir mesa'],['⚒️ Ir a la forja','ir forja'],['🧱 Ir a sala…','ir sala ']]],
