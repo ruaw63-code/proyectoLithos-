@@ -1672,12 +1672,12 @@ function mpHostTick(now){for(let i=kings.length-1;i>0;i--){if(kings[i].rp&&kings
  mp.peers.forEach(p=>{if(!p.king||p.king.dead||!p.hello)return;mpTo(p.id,mpSnap(p),1);if(M)mpTo(p.id,M)})}
 function mpSnap(p){const k=p.king,now=performance.now(),nr=o=>Math.abs(o.x-k.x)<1100&&Math.abs(o.y-k.y)<1100;
  const S={t:'s',q:++mp.seq,me:{u:k.uid,g:rd(k.g),s:rd(k.s),sta:r2(k.sta),ex:k.ex?1:0,lvs:k.lvs,unl:k.unl?1:0,og:k.ogre?1:0,pc:k.units.length,mp:maxPop(k),sc:k.score|0},
-  k:kings.filter(o=>!o.dead).map(o=>[o.uid,rd(o.x),rd(o.y),r2(o.a),r2(o.fa),rd(o.hp),o.max,o.lv]),u:[],st:[],r:[],g:[],p:[],ne:[]};
- kings.forEach(o=>{o.units.forEach(u=>{if(!u.dead&&nr(u))S.u.push([o.uid,u.id,u.t,rd(u.x),rd(u.y),rd(u.hp),rd(u.max),u.boss?1:0,u.pulse&&now-u.pulse<500?rd(now-u.pulse):-1])});
+  k:kings.filter(o=>!o.dead).map(o=>[o.uid,rd(o.x),rd(o.y),r2(o.a),r2(o.fa),rd(o.hp),o.max,o.lv,o.sw&&now-o.sw<400?rd(now-o.sw):-1,o.swM?1:0,r2(o.sa||0),o.slow>now?rd(o.slow-now):0,o.burn>now?rd(o.burn-now):0,o.rg&&now-o.rg<400?rd(now-o.rg):-1]),u:[],st:[],r:[],g:[],p:[],ne:[]};
+ kings.forEach(o=>{o.units.forEach(u=>{if(!u.dead&&nr(u))S.u.push([o.uid,u.id,u.t,rd(u.x),rd(u.y),rd(u.hp),rd(u.max),u.boss?1:0,u.pulse&&now-u.pulse<500?rd(now-u.pulse):-1,u.sw&&now-u.sw<300?rd(now-u.sw):-1,r2(u.sa||0)])});
   o.st.forEach(s=>{if(s.dead||!nr(s))return;const a=[o.uid,s.id,s.t,rd(s.x),rd(s.y),s.lv,rd(s.hp),rd(s.max)];if(s.t==='atower')a.push(s.aa.map(r2),s.fl.map(f=>Math.min(9999,rd(now-f))));S.st.push(a)})});
- res.forEach(r=>{if(nr(r))S.r.push([rd(r.x),rd(r.y),rd(r.n)])});gems.forEach(q=>{if(nr(q))S.g.push([rd(q.x),rd(q.y)])});
+ S.sp=sparks.filter(q=>nr(q)&&now-q.t<420).map(q=>[rd(q.x),rd(q.y),rd(now-q.t),r2(q.a),q.v?1:0]);res.forEach(r=>{if(nr(r))S.r.push([rd(r.x),rd(r.y),rd(r.n)])});gems.forEach(q=>{if(nr(q))S.g.push([rd(q.x),rd(q.y)])});
  proj.forEach(q=>{if(nr(q))S.p.push([rd(q.x),rd(q.y),q.k,r2(q.a||0),q.sk||''])});dust.forEach(q=>{if(nr(q))(S.du=S.du||[]).push([rd(q.x),rd(q.y),rd(q.t-now)])});
- NE.units.forEach(u=>{if(!u.dead&&nr(u))S.ne.push([u.id,u.t,rd(u.x),rd(u.y),rd(u.hp),rd(u.max),u.boss?1:0,r2(u.fa||0)])});orph.forEach(u=>{if(nr(u))S.ne.push([u.id,u.t,rd(u.x),rd(u.y),rd(u.hp),rd(u.max),0,0])});return S}
+ NE.units.forEach(u=>{if(!u.dead&&nr(u))S.ne.push([u.id,u.t,rd(u.x),rd(u.y),rd(u.hp),rd(u.max),u.boss?1:0,r2(u.fa||0),u.sw&&now-u.sw<400?rd(now-u.sw):-1,r2(u.sa||0)])});orph.forEach(u=>{if(nr(u))S.ne.push([u.id,u.t,rd(u.x),rd(u.y),rd(u.hp),rd(u.max),0,0])});return S}
 function mpMini(){return{t:'mini',k:kings.filter(o=>!o.dead).map(o=>[o.uid,o.name,o.col,o.sk,o.team?o.team.id:0,o.score|0,rd(o.hx),rd(o.hy),[o.lvs.soldier,o.lvs.archer,o.lvs.mage,o.lvs.dragon,o.lvs.ogre,o.lvs.healer],o.st.filter(s=>!s.dead).map(s=>[rd(s.x),rd(s.y),s.t,s.lv]),o.hu?1:0]),
   tm:teams.map(t=>[t.id,t.tag,t.col,t.name]),g:gems.map(q=>[rd(q.x),rd(q.y)]),bz:bossZ}}
 /* ----- cliente ----- */
@@ -1703,15 +1703,15 @@ function cInit(m){mp.started=true;decor.length=0;m.decor.forEach(d=>decor.push({
  const o=cKing(m.uid);o.x=o.tx=m.x;o.y=o.ty=m.y;o.p=1;o.col='#4f86e6';mp.km.set(m.uid,o);kings.push(o);P=o;
  running=true;last=performance.now();$('menu').style.display='none';lanClose();hud();toast('🌐 ¡Conectado! Mueve a tu Rey')}
 function cSnap(S){const now=performance.now(),km=mp.km,seen=new Set(),me=S.me;
- S.k.forEach(a=>{let o=km.get(a[0]);if(!o){o=cKing(a[0]);km.set(a[0],o);kings.push(o);o.x=a[1];o.y=a[2]}o.tx=a[1];o.ty=a[2];o.a=a[3];o.tfa=a[4];o.hp=a[5];o.max=a[6];o.lv=a[7];seen.add(a[0])});
+ S.k.forEach(a=>{let o=km.get(a[0]);if(!o){o=cKing(a[0]);km.set(a[0],o);kings.push(o);o.x=a[1];o.y=a[2]}o.tx=a[1];o.ty=a[2];o.a=a[3];o.tfa=a[4];o.hp=a[5];o.max=a[6];o.lv=a[7];if(a[8]>=0){const s0=now-a[8];if(!o.sw||Math.abs(s0-o.sw)>180){o.sw=s0;o.swM=a[9];o.sa=a[10]}}o.slow=a[11]>0?now+a[11]:0;o.burn=a[12]>0?now+a[12]:0;o.rg=a[13]>=0?now-a[13]:0;seen.add(a[0])});
  kings=kings.filter(o=>{if(seen.has(o.uid))return true;km.delete(o.uid);return false});
  const np=km.get(me.u);if(np&&np!==P){if(P)P.p=0;P=np;P.p=1;P.x=P.tx;P.y=P.ty}
  if(!P)return;P.g=me.g;P.s=me.s;P.sta=me.sta;P.ex=me.ex;P.lvs=me.lvs;P.unl=me.unl;P.ogre=me.og;P.pc=me.pc;P.mpop=me.mp;P.score=me.sc;
  kings.forEach(o=>{o.units=[];o.st=[]});
- const nu=new Map();S.u.forEach(a=>{const o=km.get(a[0]);if(!o)return;let u=mp.um.get(a[1]);if(!u)u={id:a[1],t:a[2],x:a[3],y:a[4],cd:0,fa:0};u.o=o;u.tx=a[3];u.ty=a[4];u.hp=a[5];u.max=a[6];u.boss=a[7];u.r=ST[u.t].r*(u.boss?1.5:1);if(a[8]>=0)u.pulse=now-a[8];nu.set(u.id,u);o.units.push(u)});mp.um=nu;
+ const nu=new Map();S.u.forEach(a=>{const o=km.get(a[0]);if(!o)return;let u=mp.um.get(a[1]);if(!u)u={id:a[1],t:a[2],x:a[3],y:a[4],cd:0,fa:0};u.o=o;u.tx=a[3];u.ty=a[4];u.hp=a[5];u.max=a[6];u.boss=a[7];u.r=ST[u.t].r*(u.boss?1.5:1);if(a[8]>=0)u.pulse=now-a[8];if(a[9]>=0){const s0=now-a[9];if(!u.sw||Math.abs(s0-u.sw)>180){u.sw=s0;u.sa=a[10]}}nu.set(u.id,u);o.units.push(u)});mp.um=nu;
  const ns=new Map();S.st.forEach(a=>{const o=km.get(a[0]);if(!o)return;let s=mp.sm.get(a[1]);if(!s)s={id:a[1],t:a[2],cd:0,st:1};s.o=o;s.x=a[3];s.y=a[4];s.lv=a[5];s.hp=a[6];s.max=a[7];s.r=SR[s.t];if(a[8]){s.aa=a[8];s.fl=a[9].map(v=>now-v)}ns.set(s.id,s);o.st.push(s)});mp.sm=ns;
  res=S.r.map(a=>({x:a[0],y:a[1],n:a[2],t:'g',r:16}));gems=S.g.map(a=>({x:a[0],y:a[1]}));proj=S.p.map(a=>({x:a[0],y:a[1],k:a[2],a:a[3],sk:a[4]||''}));dust.length=0;(S.du||[]).forEach(a=>dust.push({x:a[0],y:a[1],t:performance.now()+a[2]}));
- const nn=new Map();NE.units=S.ne.map(a=>{let u=mp.nm.get(a[0]);if(!u)u={id:a[0],x:a[2],y:a[3],cd:0};u.t=a[1];u.tx=a[2];u.ty=a[3];u.hp=a[4];u.max=a[5];u.boss=a[6];u.fa=a[7];u.o=NE;u.r=ST[u.t].r*(u.boss?1.5:1);nn.set(u.id,u);return u});mp.nm=nn}
+ const nn=new Map();NE.units=S.ne.map(a=>{let u=mp.nm.get(a[0]);if(!u)u={id:a[0],x:a[2],y:a[3],cd:0};u.t=a[1];u.tx=a[2];u.ty=a[3];u.hp=a[4];u.max=a[5];u.boss=a[6];u.fa=a[7];if(a[8]>=0){const s0=now-a[8];if(!u.sw||Math.abs(s0-u.sw)>180){u.sw=s0;u.sa=a[9]}}u.o=NE;u.r=ST[u.t].r*(u.boss?1.5:1);nn.set(u.id,u);return u});mp.nm=nn;sparks=(S.sp||[]).map(a=>({x:a[0],y:a[1],t:now-a[2],a:a[3],v:a[4]}))}
 function cMini(m){const km=mp.km,tm=new Map();teams=m.tm.map(a=>{const t={id:a[0],tag:a[1],col:a[2],name:a[3],members:[]};tm.set(t.id,t);return t});
  m.k.forEach(a=>{let o=km.get(a[0]);if(!o){o=cKing(a[0]);km.set(a[0],o);kings.push(o);o.x=o.tx=a[6];o.y=o.ty=a[7]}o.name=a[1];o.col=a[2];o.sk=a[3];o.team=tm.get(a[4])||null;if(o.team)o.team.members.push(o);o.score=a[5];o.hx=a[6];o.hy=a[7];const L=a[8];o.lvs={soldier:L[0],archer:L[1],mage:L[2],dragon:L[3],ogre:L[4],healer:L[5]};o.mst=a[9].map(s=>({x:s[0],y:s[1],t:s[2],lv:s[3]}));o.hu=a[10]});
  teams.forEach(t=>t.leader=t.members[0]);mp.mg=m.g.map(a=>({x:a[0],y:a[1]}));bossZ=m.bz}
