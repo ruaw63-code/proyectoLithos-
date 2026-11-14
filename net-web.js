@@ -18,7 +18,11 @@
     { urls: 'turns:global.relay.metered.ca:443?transport=tcp', username: TURN_USER, credential: TURN_PASS }
   ];
   var ICE = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun.relay.metered.ca:80' }].concat(TURN);
+  /* Servidor de salas PROPIO. Pon aquí solo el dominio, sin https://  (ej. 'lithos-peer.onrender.com').
+     Si lo dejas vacío usa el servidor público gratis de PeerJS (a veces se cae). */
+  var PEER_HOST = '';
   var CFG = { debug: 0, config: { iceServers: ICE, iceCandidatePoolSize: 4 } };
+  if (PEER_HOST) { CFG.host = PEER_HOST; CFG.port = 443; CFG.secure = true; CFG.path = '/'; }
   var HI_WATER = 96 * 1024;   // si el canal acumula más de esto, los mensajes "descartables" (instantáneas) se omiten
   var PING_MS = 2500, DEAD_MS = 12000;
 
@@ -123,7 +127,8 @@
       loadLib().then(function () {
         if (C !== c) return;
         var peer = c.peer = new window.Peer(undefined, CFG);
-        var to = setTimeout(function () { fail('La sala no respondió (revisa el código)'); }, 20000);
+        var stage = 'signal';
+        var to = setTimeout(function () { fail(stage === 'signal' ? 'No se pudo contactar el servidor de salas (PeerJS). Revisa tu internet e intenta otra vez' : 'Se encontró la sala pero no se pudo abrir la conexión entre los dos (red/TURN). Prueba con WiFi o revisa el TURN'); }, 45000);
         peer.on('error', function (err) {
           clearTimeout(to);
           var t = err && err.type;
@@ -131,7 +136,9 @@
           fail(t === 'peer-unavailable' ? 'No existe una sala con ese código' : t === 'network' || t === 'socket-error' ? 'Sin conexión a internet' : 'Error de red: ' + (t || 'desconocido'));
         });
         peer.on('open', function () {
+          stage = 'room';
           var conn = c.conn = peer.connect(PREFIX + code, { reliable: true, serialization: 'none' });
+          setTimeout(function () { try { var pc = conn.peerConnection; if (pc) pc.addEventListener('iceconnectionstatechange', function () { console.log('[lithos] ICE:', pc.iceConnectionState); }); } catch (e) { } }, 300);
           conn.on('open', function () {
             clearTimeout(to); c.last = Date.now();
             c.tick = setInterval(function () {
