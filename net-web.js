@@ -50,7 +50,7 @@
 
   function hostStop() {
     var h = H; H = null; api.code = ''; if (!h) return;
-    h.dead = true; clearInterval(h.tick);
+    h.dead = true; clearInterval(h.tick); clearTimeout(h.ot);
     h.conns.forEach(function (o) { try { o.c.close(); } catch (e) { } });
     try { h.peer.destroy(); } catch (e) { }
   }
@@ -62,9 +62,10 @@
   }
 
   function hostOpen(h, tries) {
-    var code = newCode(); api.code = code; h.code = code;
+    var code = newCode(); api.code = ''; h.code = code; clearTimeout(h.ot);
     var peer = new window.Peer(PREFIX + code, CFG); h.peer = peer;
-    peer.on('open', function () { if (H === h) ev('code', code, ''); });
+    h.ot = setTimeout(function () { if (H === h && !h.opened) ev('hosterr', 'el servidor de salas no respondió (' + (h.lastErr || 'sin respuesta') + ')', ''); }, 60000);
+    peer.on('open', function () { if (H === h) { h.opened = 1; clearTimeout(h.ot); api.code = code; ev('code', code, ''); } });
     peer.on('connection', function (c) {
       if (H !== h) { try { c.close(); } catch (e) { } return; }
       var id = ++h.nid, o = { c: c, last: Date.now() };
@@ -81,7 +82,7 @@
     peer.on('disconnected', function () { if (H === h && !h.dead) try { peer.reconnect(); } catch (e) { } });
     peer.on('error', function (err) {
       if (H !== h) return;
-      var t = err && err.type;
+      var t = err && err.type; h.lastErr = t;
       if (t === 'unavailable-id' && tries < 6) { try { peer.destroy(); } catch (e) { } hostOpen(h, tries + 1); return; }
       if (t === 'network' || t === 'server-error' || t === 'socket-error' || t === 'socket-closed') return; // se reintenta solo
       ev('hosterr', t || 'error', '');
@@ -127,8 +128,8 @@
       loadLib().then(function () {
         if (C !== c) return;
         var peer = c.peer = new window.Peer(undefined, CFG);
-        var stage = 'signal', dg = { st: 'sin-iniciar', h: 0, s: 0, r: 0, e: '', ans: 0 };
-        var dgs = function () { return ' [diag ICE=' + dg.st + ' local:host' + dg.h + '/stun' + dg.s + '/turn' + dg.r + ' respuesta=' + (dg.ans ? 'si' : 'NO') + (dg.e ? ' err=' + dg.e : '') + ']'; };
+        var stage = 'signal', dg = { st: 'sin-iniciar', h: 0, s: 0, r: 0, e: '', ans: 0, pc: 0, m: {} };
+        var dgs = function () { return ' [diag ICE=' + dg.st + ' local:host' + dg.h + '/stun' + dg.s + '/turn' + dg.r + ' pc=' + (dg.pc ? 'si' : 'NO') + ' servidor:' + JSON.stringify(dg.m) + (dg.e ? ' err=' + dg.e : '') + ']'; };
         var to = setTimeout(function () { fail(stage === 'signal' ? 'No se pudo contactar el servidor de salas (PeerJS). Revisa tu internet e intenta otra vez' : 'No se pudo abrir la conexión entre los dos.' + dgs()); }, 45000);
         peer.on('error', function (err) {
           clearTimeout(to);
@@ -138,8 +139,10 @@
         });
         peer.on('open', function () {
           stage = 'room';
-          var conn = c.conn = peer.connect(PREFIX + code, { reliable: true, serialization: 'none' });
-          var hook = function (n) { try { var pc = conn.peerConnection; if (!pc) { if (n < 40) setTimeout(function () { hook(n + 1); }, 150); return; }
+          try { peer.socket.on('message', function (m) { var t = m && m.type; dg.m[t] = (dg.m[t] || 0) + 1; if (t === 'ANSWER') dg.ans = 1; }); } catch (e) { }
+          var conn;
+          try { conn = c.conn = peer.connect(PREFIX + code, { reliable: true, serialization: 'none' }); } catch (e) { clearTimeout(to); fail('Error al abrir la conexión: ' + (e && e.message || e)); return; }
+          var hook = function (n) { try { var pc = conn.peerConnection; if (pc) dg.pc = 1; if (!pc) { if (n < 40) setTimeout(function () { hook(n + 1); }, 150); return; }
             pc.addEventListener('iceconnectionstatechange', function () { dg.st = pc.iceConnectionState; console.log('[lithos] ICE:', dg.st); });
             pc.addEventListener('signalingstatechange', function () { if (pc.remoteDescription) dg.ans = 1; });
             pc.addEventListener('icecandidate', function (e) { var t = e.candidate && e.candidate.type; if (t === 'host') dg.h++; else if (t === 'srflx') dg.s++; else if (t === 'relay') dg.r++; });
