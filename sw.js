@@ -1,4 +1,4 @@
-const C = 'lithos-v66';
+const C = 'lithos-v67';
 const F = ['./', './index.html', './net-web.js', './dungeon-art.js', './dungeon.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 const ROOT = new URL('./', self.registration.scope).pathname;
 
