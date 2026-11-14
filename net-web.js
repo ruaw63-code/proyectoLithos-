@@ -20,7 +20,7 @@
   var ICE = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun.relay.metered.ca:80' }].concat(TURN);
   /* Servidor de salas PROPIO. Pon aquí solo el dominio, sin https://  (ej. 'lithos-peer.onrender.com').
      Si lo dejas vacío usa el servidor público gratis de PeerJS (a veces se cae). */
-  var PEER_HOST = '';
+  var PEER_HOST = 'lithos-peerserver.onrender.com';
   var CFG = { debug: 0, config: { iceServers: ICE, iceCandidatePoolSize: 4 } };
   if (PEER_HOST) { CFG.host = PEER_HOST; CFG.port = 443; CFG.secure = true; CFG.path = '/'; }
   var HI_WATER = 96 * 1024;   // si el canal acumula más de esto, los mensajes "descartables" (instantáneas) se omiten
