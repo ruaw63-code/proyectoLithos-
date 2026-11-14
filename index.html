@@ -1684,7 +1684,7 @@ function mpMini(){return{t:'mini',k:kings.filter(o=>!o.dead).map(o=>[o.uid,o.nam
 function lanJoin(ip,port){if(!ip){lanNote=NB.web?'Escribe el código de la sala':'Escribe la IP del anfitrión';renderLan();return}
  mp={role:'client',started:false,hello:0,names:[],km:new Map(),um:new Map(),sm:new Map(),nm:new Map(),lbT:0,inT:0,lastIn:'',mg:null};lanView='joining';lanNote='';renderLan();
  try{NB.stopScan();NB.join(ip,port|0)}catch(e){lanFail(String(e));return}
- const m=mp;setTimeout(()=>{if(mp===m&&!m.hello)lanFail('La sala no respondió')},NB.web?25000:7000)}
+ const m=mp;setTimeout(()=>{if(mp===m&&!m.hello)lanFail('La sala no respondió')},NB.web?70000:7000)}
 function cKing(uid){return{uid,p:0,name:'…',col:'#ffffff',x:0,y:0,tx:0,ty:0,r:22,a:0,fa:0,tfa:0,hp:1,max:1,lv:1,sk:'classic',team:null,hx:0,hy:0,st:[],units:[],mst:[],lvs:{soldier:1,bomber:1,archer:1,mage:1,dragon:1,ogre:1,healer:1},g:0,s:0,sta:4,ex:0,score:0}}
 function clientMsg(txt){let m;try{m=JSON.parse(txt)}catch(e){return}
  switch(m.t){
