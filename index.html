@@ -1339,12 +1339,12 @@ const VK={
  x:{n:'XP',i:'⭐',v:[10,15,20,25,30,40,50,70,100],p:[500,1000,1500,2250,3500,5500,8750,15000],d:'Más puntos (XP) durante una partida.',f:v=>'+'+v+'% de puntos (XP)'},
  d:{n:'Diamantes',i:'💎',v:[10,15,20,25,30,40,50,70,100],p:[750,1500,2250,3250,5000,7500,12000,20000],d:'Más 💎 ganados durante una partida.',f:v=>'+'+v+'% de 💎 ganados'}};
 const VIP_DAY=2; // vales VIP que se pueden comprar por día y tipo
-const PK=[{id:'sol',n:'Lanceros',i:'🗡️',u:{soldier:5},p:250},{id:'arc',n:'Arqueros',i:'🏹',u:{archer:4},p:350},{id:'mag',n:'Magos',i:'🔮',u:{mage:3},p:550},{id:'hea',n:'Sanadores',i:'💚',u:{healer:2},p:450},{id:'bom',n:'Bombarderos',i:'💣',u:{bomber:4},p:350},{id:'mix',n:'Escuadrón mixto',i:'⚔️',u:{soldier:3,archer:2,mage:1,healer:1},p:900}];
+const PK=[{id:'sol',n:'Lanceros',i:'🗡️',u:{soldier:5},p:250},{id:'arc',n:'Arqueros',i:'🏹',u:{archer:4},p:450},{id:'mag',n:'Magos',i:'🔮',u:{mage:3},p:900},{id:'hea',n:'Sanadores',i:'💚',u:{healer:2},p:300},{id:'bom',n:'Bombarderos',i:'💣',u:{bomber:4},p:300},{id:'mix',n:'Escuadrón mixto',i:'⚔️',u:{soldier:3,archer:2,mage:1,healer:1},p:650}];
 const CHESTS=[
- {id:'v1',i:'📦',n:'Cofre de vales',p:1200,d:'1 vale al azar (revivir, oro, XP o 💎).',w:[38,25,16,10,6,3,1.5,.5],k:1},
- {id:'v3',i:'🎁',n:'Cofre grande de vales',p:7500,d:'3 vales al azar, con mejores probabilidades.',w:[10,15,22,20,15,10,6,2],k:3},
- {id:'sk',i:'👑',n:'Cofre de aspectos',p:2800,d:'Un aspecto del Rey o unas tropas que aún no tengas.'},
- {id:'un',i:'🪖',n:'Cofre de unidades',p:600,d:'2 paquetes de unidades para empezar una partida.'}];
+ {id:'v1',i:'📦',n:'Cofre de vales',p:850,d:'1 vale al azar (revivir, oro, XP o 💎). Sale casi siempre uno común; los buenos son rarísimos.',w:[62,24,9,3.5,1,.35,.12,.03],k:1,sx:.001},
+ {id:'v3',i:'🎁',n:'Cofre grande de vales',p:3350,d:'3 vales al azar con mejores probabilidades. Garantiza que al menos 1 sea Poco común o mejor.',w:[45,28,15,7.5,3,1.1,.35,.05],k:3,sx:.0015},
+ {id:'sk',i:'👑',n:'Cofre de aspectos',p:1250,d:'Un aspecto del Rey o unas tropas que aún no tengas. Los de más prestigio solo se compran directo.',w:[45,35,13,6,1],tw:['c','r','e','l','m']},
+ {id:'un',i:'🪖',n:'Cofre de unidades',p:800,d:'2 paquetes de unidades para empezar una partida.'}];
 const today=()=>new Date().toISOString().slice(0,10);
 const wpick=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){if((r-=w[i])<0)return i}return w.length-1};
 const vcode=(t,i)=>t+(i+1),vname=c=>VK[c[0]].i+' '+VK[c[0]].n+' · '+TIERS[+c.slice(1)-1][0];
@@ -1358,9 +1358,9 @@ const skinPrice=pr=>pr?Math.round((1000+pr*8)/50)*50:0;
 const troopPrice=s=>s.pr?Math.max(900,Math.round(skinPrice(s.pr)*.7/50)*50):0;
 const RW={c:40,r:30,e:18,l:10,m:2,h:0,f:0};
 let lastGot=[];function openChest(c){lastGot=[];if(pref.dm<c.p)return'Faltan '+(c.p-pref.dm)+' 💎';pref.dm-=c.p;let out=[];
- if(c.k){for(let n=0;n<c.k;n++){const t='rgxd'[Math.random()*4|0];let i=wpick(c.w);if(Math.random()<.004)i=8;const cd=giveV(t,i);lastGot.push(cd);out.push((i===8?'✨ ¡¡SECRETO!! ':'')+vname(cd)+(i===8&&t==='r'?' (3 usos)':''))}}
- else if(c.id==='sk'){const pool=[];SKINS.forEach(s=>{if(s.pr&&!pref.own.includes(s.id)&&RW[s.q])pool.push({s,k:'k',w:RW[s.q]})});troopSkins().forEach(s=>{if(s.pr&&!pref.tow.includes(s.id)&&RW[s.q])pool.push({s,k:'t',w:RW[s.q]})});
-  if(!pool.length){pref.dm+=1000;out.push('Ya tienes todo: te devolvemos 1000 💎')}else{const it=pool[wpick(pool.map(x=>x.w))];if(it.k==='k'){pref.own.push(it.s.id);out.push('👑 Aspecto del Rey: '+it.s.name+' ('+(QN[it.s.q]||QN.c)[0]+')')}else{pref.tow.push(it.s.id);out.push('🪖 Tropas: '+it.s.name+' ('+(QN[it.s.q]||QN.c)[0]+')')}}}
+ if(c.k){for(let n=0;n<c.k;n++){const t='rgxd'[Math.random()*4|0];let i=wpick(c.w);if(Math.random()<(c.sx||.001))i=8;if(c.k>1&&n===c.k-1&&!out.some(x=>/Poco|Raro|Muy|Épico|Legend|Mítico|VIP|SECRETO/.test(x))&&i===0)i=1;const cd=giveV(t,i);lastGot.push(cd);out.push((i===8?'✨ ¡¡SECRETO!! ':'')+vname(cd)+(i===8&&t==='r'?' (3 usos)':''))}}
+ else if(c.id==='sk'){const pool=[];SKINS.forEach(s=>{if(s.pr&&!pref.own.includes(s.id)&&c.tw.includes(s.q))pool.push({s,k:'k'})});troopSkins().forEach(s=>{if(s.pr&&!pref.tow.includes(s.id)&&c.tw.includes(s.q))pool.push({s,k:'t'})});
+  if(!pool.length){pref.dm+=1000;out.push('Ya tienes todo lo que puede salir aquí: te devolvemos 1000 💎')}else{let ti=wpick(c.w),it=null;for(let g=0;g<c.tw.length&&!it;g++){const tq=c.tw[(ti+g)%c.tw.length],L=pool.filter(x=>x.s.q===tq);if(L.length)it=L[Math.random()*L.length|0]}if(it.k==='k'){pref.own.push(it.s.id);out.push('👑 Aspecto del Rey: '+it.s.name+' ('+(QN[it.s.q]||QN.c)[0]+')')}else{pref.tow.push(it.s.id);out.push('🪖 Tropas: '+it.s.name+' ('+(QN[it.s.q]||QN.c)[0]+')')}}}
  else{for(let n=0;n<2;n++){const p=PK[Math.random()*PK.length|0];pref.pk[p.id]=(pref.pk[p.id]||0)+1;out.push(p.i+' '+p.n)}}
  savePref();hud();return out}
 /* ---- partida: vales activos, unidades iniciales y revivir ---- */
