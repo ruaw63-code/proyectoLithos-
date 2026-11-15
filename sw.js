@@ -1,5 +1,5 @@
-const C = 'lithos-v74';
-const F = ['./', './index.html', './net-web.js', './dungeon-art.js', './dungeon.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const C = 'lithos-v75';
+const F = ['./', './index.html', './net-web.js', './dungeon-art.js', './dungeon.js', './pase.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 const ROOT = new URL('./', self.registration.scope).pathname;
 
 self.addEventListener('install', e => {
