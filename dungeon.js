@@ -229,7 +229,7 @@ function DI(){let L=pref.dgi;if(!L||typeof L!=='object')L=pref.dgi={};
  if(!Array.isArray(L.bag))L.bag=[];if(!L.eq||typeof L.eq!=='object')L.eq={w:[winst('sword',0,null),null],g:{}};if(!Array.isArray(L.eq.w))L.eq.w=[null,null];if(!L.eq.g)L.eq.g={};
  for(const k in GSLOT)if(L.eq.g[k]===undefined)L.eq.g[k]=null;
  if(!L.runes)L.runes={};ELK.forEach(k=>{if(!Array.isArray(L.runes[k]))L.runes[k]=[0,0,0,0,0,0];while(L.runes[k].length<6)L.runes[k].push(0)});if(!L.fdw||typeof L.fdw!=='object')L.fdw={};L.cap=42;if(!Array.isArray(L.store))L.store=[];if(!Array.isArray(L.pets))L.pets=[];L.souls=Math.max(0,Math.floor(+L.souls)||0);if(!Array.isArray(L.hang))L.hang=[];while(L.hang.length<6)L.hang.push(null);
- L.bag.forEach(it=>{if(it&&it.k==='g')cleanGear(it.g);if(it&&it.k==='w'&&it.w.b0){it.w.el=it.w.b0.el;it.w.elq=it.w.b0.elq;it.w.fx=it.w.b0.fx;delete it.w.b0}});for(const k in L.eq.g)cleanGear(L.eq.g[k]);L.eq.w.forEach(w=>{if(w&&w.b0){w.el=w.b0.el;w.elq=w.b0.elq;w.fx=w.b0.fx;delete w.b0}});return L}
+ L.bag.forEach(it=>{if(it&&it.k==='g')cleanGear(it.g);if(it&&it.k==='w'&&it.w.b0){it.w.el=it.w.b0.el;it.w.elq=it.w.b0.elq;it.w.fx=it.w.b0.fx;delete it.w.b0}});for(const k in L.eq.g)cleanGear(L.eq.g[k]);if(!(D.on&&!D.over&&!D.hub))L.eq.w.forEach(w=>{if(w&&w.b0){w.el=w.b0.el;w.elq=w.b0.elq;w.fx=w.b0.fx;delete w.b0}});return L}
 const wImg=(i,px)=>{px=px||38;const u=DGART.wIcon(i.id,Object.assign({id:i.id},WP[i.id]),i.q,i.el,rc(i.q));return u?'<img class="wic" width="'+px+'" height="'+px+'" src="'+u+'" alt="">':WP[i.id].i};
 const bagFree=()=>DI().cap-DI().bag.length;
 function bagAdd(it){const L=DI();if(L.bag.length>=L.cap)return false;L.bag.push(it);try{savePref()}catch(e){}return true}
