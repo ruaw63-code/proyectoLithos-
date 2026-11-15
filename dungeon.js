@@ -197,7 +197,7 @@ function dropChest(R,q,cards,pos){let cx,cy,n=0;if(pos){cx=pos.x;cy=pos.y}else d
 /* ---------- tienda del mercader ---------- */
 function mkShop(x,y){const fl=D.floor,pr=(b,q)=>Math.round(b*(1+q*.8)*(1+fl*.12)),items=[];
  const w1=rollWeapon(fl,.08),w2=rollWeapon(fl,0),g1=rollGear(fl,.08),g2=rollGear(fl,0),b=pick(BUFFS.filter(buffOk));
- items.push({t:'w',w:w1,p:pr(40,w1.q)},{t:'w',w:w2,p:pr(40,w2.q)},{t:'g',g:g1,p:pr(32,g1.q)},{t:'g',g:g2,p:pr(32,g2.q)},{t:'c',b,p:Math.round((50+b.q*30)*(1+fl*.1))},{t:'p',p:Math.round(28+9*fl)},{t:'pet',k:pick(Object.keys(PET).filter(k=>!PET[k].fd)),p:Math.round(2200+60*fl)});
+ items.push({t:'w',w:w1,p:pr(220,w1.q)},{t:'w',w:w2,p:pr(220,w2.q)},{t:'g',g:g1,p:pr(180,g1.q)},{t:'g',g:g2,p:pr(180,g2.q)},{t:'c',b,p:Math.round((160+b.q*80)*(1+fl*.1))},{t:'p',p:Math.round(110+30*fl)},{t:'pet',k:pick(Object.keys(PET).filter(k=>!PET[k].fd)),p:Math.round(2200+60*fl)});
  return{k:'shop',x,y,armed:true,items}}
 function shopMenu(s){D.paused=true;D.shopping=1;sfx('upgrade');shopShow(s)}
 function shopShow(s){const b=boxEl(),h=hero;D.shopping=1;

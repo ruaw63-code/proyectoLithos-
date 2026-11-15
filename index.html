@@ -1334,17 +1334,17 @@ function gain(n,quiet){pref.dm+=n;savePref();hud();if(!quiet)toast('💎 +'+n)}
 /* ===== v20: tienda por secciones (aspectos, tropas, vales, cofres, inicio), vales de revivir/oro/XP/💎 y unidades iniciales ===== */
 const TIERS=[['Común','#b8c4b0'],['Poco común','#5ad05a'],['Raro','#4cc9f0'],['Muy raro','#6f8bff'],['Épico','#c46cff'],['Legendario','#ffb020'],['Mítico','#ff5a7a'],['VIP','#ffd84a'],['Secreto','#ffffff']];
 const VK={
- r:{n:'Revivir',i:'🎫',v:[15,30,40,50,60,80,90,100,100],p:[2,4,7,11,16,25,40,70],d:'Si mueres, vuelves con un % de las tropas que tenías.',f:v=>'Revives con el '+v+'% de tus tropas'},
- g:{n:'Oro',i:'🪙',v:[10,15,20,25,30,40,50,70,100],p:[2,4,6,9,14,22,35,60],d:'Más oro durante una partida.',f:v=>'+'+v+'% de oro en la partida'},
- x:{n:'XP',i:'⭐',v:[10,15,20,25,30,40,50,70,100],p:[2,4,6,9,14,22,35,60],d:'Más puntos (XP) durante una partida.',f:v=>'+'+v+'% de puntos (XP)'},
- d:{n:'Diamantes',i:'💎',v:[10,15,20,25,30,40,50,70,100],p:[3,6,9,13,20,30,48,80],d:'Más 💎 ganados durante una partida.',f:v=>'+'+v+'% de 💎 ganados'}};
+ r:{n:'Revivir',i:'🎫',v:[15,30,40,50,60,80,90,100,100],p:[500,1000,1750,2750,4000,6250,10000,17500],d:'Si mueres, vuelves con un % de las tropas que tenías.',f:v=>'Revives con el '+v+'% de tus tropas'},
+ g:{n:'Oro',i:'🪙',v:[10,15,20,25,30,40,50,70,100],p:[500,1000,1500,2250,3500,5500,8750,15000],d:'Más oro durante una partida.',f:v=>'+'+v+'% de oro en la partida'},
+ x:{n:'XP',i:'⭐',v:[10,15,20,25,30,40,50,70,100],p:[500,1000,1500,2250,3500,5500,8750,15000],d:'Más puntos (XP) durante una partida.',f:v=>'+'+v+'% de puntos (XP)'},
+ d:{n:'Diamantes',i:'💎',v:[10,15,20,25,30,40,50,70,100],p:[750,1500,2250,3250,5000,7500,12000,20000],d:'Más 💎 ganados durante una partida.',f:v=>'+'+v+'% de 💎 ganados'}};
 const VIP_DAY=2; // vales VIP que se pueden comprar por día y tipo
-const PK=[{id:'sol',n:'Lanceros',i:'🗡️',u:{soldier:5},p:3},{id:'arc',n:'Arqueros',i:'🏹',u:{archer:4},p:5},{id:'mag',n:'Magos',i:'🔮',u:{mage:3},p:8},{id:'hea',n:'Sanadores',i:'💚',u:{healer:2},p:6},{id:'bom',n:'Bombarderos',i:'💣',u:{bomber:4},p:5},{id:'mix',n:'Escuadrón mixto',i:'⚔️',u:{soldier:3,archer:2,mage:1,healer:1},p:12}];
+const PK=[{id:'sol',n:'Lanceros',i:'🗡️',u:{soldier:5},p:250},{id:'arc',n:'Arqueros',i:'🏹',u:{archer:4},p:350},{id:'mag',n:'Magos',i:'🔮',u:{mage:3},p:550},{id:'hea',n:'Sanadores',i:'💚',u:{healer:2},p:450},{id:'bom',n:'Bombarderos',i:'💣',u:{bomber:4},p:350},{id:'mix',n:'Escuadrón mixto',i:'⚔️',u:{soldier:3,archer:2,mage:1,healer:1},p:900}];
 const CHESTS=[
- {id:'v1',i:'📦',n:'Cofre de vales',p:10,d:'1 vale al azar (revivir, oro, XP o 💎).',w:[38,25,16,10,6,3,1.5,.5],k:1},
- {id:'v3',i:'🎁',n:'Cofre grande de vales',p:35,d:'3 vales al azar, con mejores probabilidades.',w:[10,15,22,20,15,10,6,2],k:3},
- {id:'sk',i:'👑',n:'Cofre de aspectos',p:80,d:'Un aspecto del Rey o unas tropas que aún no tengas.'},
- {id:'un',i:'🪖',n:'Cofre de unidades',p:12,d:'2 paquetes de unidades para empezar una partida.'}];
+ {id:'v1',i:'📦',n:'Cofre de vales',p:1200,d:'1 vale al azar (revivir, oro, XP o 💎).',w:[38,25,16,10,6,3,1.5,.5],k:1},
+ {id:'v3',i:'🎁',n:'Cofre grande de vales',p:7500,d:'3 vales al azar, con mejores probabilidades.',w:[10,15,22,20,15,10,6,2],k:3},
+ {id:'sk',i:'👑',n:'Cofre de aspectos',p:2800,d:'Un aspecto del Rey o unas tropas que aún no tengas.'},
+ {id:'un',i:'🪖',n:'Cofre de unidades',p:600,d:'2 paquetes de unidades para empezar una partida.'}];
 const today=()=>new Date().toISOString().slice(0,10);
 const wpick=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){if((r-=w[i])<0)return i}return w.length-1};
 const vcode=(t,i)=>t+(i+1),vname=c=>VK[c[0]].i+' '+VK[c[0]].n+' · '+TIERS[+c.slice(1)-1][0];
@@ -1354,12 +1354,13 @@ function buyV(t,i){const p=VK[t].p[i];if(i===7&&vipLeft(t)<=0)return'Hoy ya comp
 function useExtra(){pref.bs=null}
 /* tropas con aspecto propio: las mismas 21 que los aspectos del Rey, pero se compran aparte */
 const troopSkins=()=>SKINS.filter(s=>s.id!=='classic'&&!s.fd);
-const troopPrice=s=>s.pr?Math.max(20,Math.round(s.pr*.7)):0;
+const skinPrice=pr=>pr?Math.round((1000+pr*8)/50)*50:0;
+const troopPrice=s=>s.pr?Math.max(900,Math.round(skinPrice(s.pr)*.7/50)*50):0;
 const RW={c:40,r:30,e:18,l:10,m:2,h:0,f:0};
 let lastGot=[];function openChest(c){lastGot=[];if(pref.dm<c.p)return'Faltan '+(c.p-pref.dm)+' 💎';pref.dm-=c.p;let out=[];
  if(c.k){for(let n=0;n<c.k;n++){const t='rgxd'[Math.random()*4|0];let i=wpick(c.w);if(Math.random()<.004)i=8;const cd=giveV(t,i);lastGot.push(cd);out.push((i===8?'✨ ¡¡SECRETO!! ':'')+vname(cd)+(i===8&&t==='r'?' (3 usos)':''))}}
  else if(c.id==='sk'){const pool=[];SKINS.forEach(s=>{if(s.pr&&!pref.own.includes(s.id)&&RW[s.q])pool.push({s,k:'k',w:RW[s.q]})});troopSkins().forEach(s=>{if(s.pr&&!pref.tow.includes(s.id)&&RW[s.q])pool.push({s,k:'t',w:RW[s.q]})});
-  if(!pool.length){pref.dm+=40;out.push('Ya tienes todo: te devolvemos 40 💎')}else{const it=pool[wpick(pool.map(x=>x.w))];if(it.k==='k'){pref.own.push(it.s.id);out.push('👑 Aspecto del Rey: '+it.s.name+' ('+(QN[it.s.q]||QN.c)[0]+')')}else{pref.tow.push(it.s.id);out.push('🪖 Tropas: '+it.s.name+' ('+(QN[it.s.q]||QN.c)[0]+')')}}}
+  if(!pool.length){pref.dm+=1000;out.push('Ya tienes todo: te devolvemos 1000 💎')}else{const it=pool[wpick(pool.map(x=>x.w))];if(it.k==='k'){pref.own.push(it.s.id);out.push('👑 Aspecto del Rey: '+it.s.name+' ('+(QN[it.s.q]||QN.c)[0]+')')}else{pref.tow.push(it.s.id);out.push('🪖 Tropas: '+it.s.name+' ('+(QN[it.s.q]||QN.c)[0]+')')}}}
  else{for(let n=0;n<2;n++){const p=PK[Math.random()*PK.length|0];pref.pk[p.id]=(pref.pk[p.id]||0)+1;out.push(p.i+' '+p.n)}}
  savePref();hud();return out}
 /* ---- partida: vales activos, unidades iniciales y revivir ---- */
@@ -1382,6 +1383,40 @@ function revUse(c){const i=+c.slice(1)-1,now=performance.now();pref.vc[c]--;if(!
  if(i===8){const bt=['ogre','dragon','golem','werewolf'][Math.random()*4|0];if(P.lvs[bt]!==undefined)P.lvs[bt]=Math.max(5,P.lvs[bt]);const u=mkUnit(P,bt,P.x+44,P.y,1);if(P.lvs[bt]===undefined){const f=Math.pow(1.26,4);u.max*=f;u.hp=u.max}P.units.push(u);msg='✨ ¡Revivir secreto! 100% de tropas y un jefe nivel 5 ('+(NM&&NM[bt]||bt)+')'}
  $('rev').style.display='none';running=true;last=now;toast(msg);hud()}
 /* ===== v22: imágenes de los vales (dibujadas en canvas, más lujo cuanto mayor la rareza) ===== */
+
+/* ---- cofres de la tienda: dibujo con animación (se agita, abre la tapa y suelta luz y destellos) ---- */
+let chAnim=null,chBusy=0;
+const CHS={v1:{b:'#9a6a34',d:'#5a3a1c',m:'#aeb7c0',g:'#ffd84a',glow:'#ffe48a',ic:'🎫'},v3:{b:'#c28a2a',d:'#7a561a',m:'#ffd84a',g:'#fff6c0',glow:'#ffe27a',ic:'🎁'},sk:{b:'#7a35c0',d:'#3f1a70',m:'#ffd84a',g:'#ff8ae0',glow:'#c9a0ff',ic:'👑'},un:{b:'#4a8a42',d:'#244a22',m:'#b8c4b0',g:'#b6f09a',glow:'#9be07b',ic:'🪖'}};
+function drawChestImg(cv,id,t){const W=200,H=112,dp=2,x=cv.getContext('2d'),C=CHS[id]||CHS.v1;if(cv.width!==W*dp){cv.width=W*dp;cv.height=H*dp}
+ x.setTransform(dp,0,0,dp,0,0);x.clearRect(0,0,W,H);
+ const pr=chAnim&&chAnim.id===id?(t-chAnim.t0)/1500:-1,anim=pr>=0,rr=(a,b,w,h,r)=>{x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()};
+ const sh=anim&&pr<.4?Math.sin(t/16)*(pr/.4)*4:0,open=anim?Math.min(1,Math.max(0,(pr-.4)/.2)):0,idle=anim?0:(Math.sin(t/500)+1)/2,bob=anim?0:Math.sin(t/420)*1.5;
+ x.save();x.translate(100+sh,62+bob);
+ x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.ellipse(0,32,56,9,0,0,Math.PI*2);x.fill();
+ /* luz que sale del cofre */
+ const glowA=anim?(pr<.4?pr*.5:Math.min(1,.2+open)):.18+idle*.22;
+ if(glowA>0){const gr=x.createRadialGradient(0,-8,2,0,-8,70);gr.addColorStop(0,C.glow);gr.addColorStop(1,'rgba(255,255,255,0)');x.globalAlpha=glowA*.8;x.fillStyle=gr;x.fillRect(-80,-80,160,120);x.globalAlpha=1}
+ if(open>0){const bm=x.createLinearGradient(0,-8,0,-110);bm.addColorStop(0,C.glow);bm.addColorStop(1,'rgba(255,255,255,0)');x.globalAlpha=.75*open*(pr>.9?Math.max(0,1-(pr-.9)*6):1);x.fillStyle=bm;x.beginPath();x.moveTo(-34,-8);x.lineTo(-52,-110);x.lineTo(52,-110);x.lineTo(34,-8);x.fill();x.globalAlpha=1}
+ /* cuerpo */
+ rr(-48,-2,96,38,6);x.fillStyle=C.b;x.fill();x.lineWidth=3;x.strokeStyle='#1a1208';x.stroke();
+ x.fillStyle=C.d;x.fillRect(-46,22,92,12);x.fillStyle='rgba(255,255,255,.12)';x.fillRect(-46,2,92,4);
+ for(const px of[-34,34]){x.fillStyle=C.m;x.fillRect(px-5,-2,10,38);x.strokeStyle='#1a1208';x.lineWidth=2;x.strokeRect(px-5,-2,10,38)}
+ /* tapa (gira hacia atrás al abrir) */
+ x.save();x.translate(0,-2);const ang=-(open*1.05)-(anim?0:idle*.05);x.rotate(ang*.0+0);
+ x.translate(0,0);const lift=open*26,sq=1-open*.4;x.translate(0,-lift);x.scale(1,sq);
+ x.beginPath();x.moveTo(-48,0);x.lineTo(-48,-14);x.quadraticCurveTo(0,-40,48,-14);x.lineTo(48,0);x.closePath();x.fillStyle=C.b;x.fill();x.lineWidth=3;x.strokeStyle='#1a1208';x.stroke();
+ x.fillStyle='rgba(255,255,255,.18)';x.beginPath();x.moveTo(-40,-8);x.quadraticCurveTo(0,-30,40,-8);x.lineTo(40,-12);x.quadraticCurveTo(0,-34,-40,-12);x.closePath();x.fill();
+ for(const px of[-34,34]){x.fillStyle=C.m;x.fillRect(px-5,-16,10,16);x.strokeStyle='#1a1208';x.lineWidth=2;x.strokeRect(px-5,-16,10,16)}
+ x.restore();
+ /* cerradura */
+ if(open<.5){x.fillStyle=C.g;rr(-8,-8,16,16,3);x.fill();x.lineWidth=2;x.strokeStyle='#1a1208';x.stroke();x.fillStyle='#1a1208';x.beginPath();x.arc(0,-1,2.6,0,Math.PI*2);x.fill();x.fillRect(-1,0,2,6)}
+ /* icono en la tapa */
+ x.font='bold 16px serif';x.textAlign='center';x.fillText(C.ic,0,-18-open*12);
+ x.restore();
+ /* destellos */
+ const n=anim&&pr>.4?14:5;for(let i=0;i<n;i++){const ph=((t/(anim?500:1300)+i/n)%1),a=i*2.4+(anim?0:t/1500),rx=anim?(pr>.4?30+ph*55:0):26+Math.sin(a)*24,ry=anim?-ph*80:-ph*38;
+  const px=100+Math.cos(a)*rx*(anim?.9:1),py=(anim?58:50)+ry;x.globalAlpha=(1-ph)*(anim&&pr<.4?0:1);x.fillStyle=i%2?'#fff':C.glow;x.beginPath();x.moveTo(px,py-3);x.lineTo(px+1,py-1);x.lineTo(px+3,py);x.lineTo(px+1,py+1);x.lineTo(px,py+3);x.lineTo(px-1,py+1);x.lineTo(px-3,py);x.lineTo(px-1,py-1);x.closePath();x.fill()}
+ x.globalAlpha=1}
 function drawTicket(cv,ty,ti,t){const W=200,H=112,dp=2,x=cv.getContext('2d');if(cv.width!==W*dp){cv.width=W*dp;cv.height=H*dp}
  x.setTransform(dp,0,0,dp,0,0);x.clearRect(0,0,W,H);
  const sec=ti===8,vip=ti===7,hue=(t/12)%360,base=sec?'hsl('+hue+',85%,60%)':TIERS[ti][1],dk=sec?'hsl('+hue+',70%,28%)':shade(base,-.55),dk2=sec?'hsl('+hue+',80%,16%)':shade(base,-.78),lt=sec?'hsl('+(hue+40)%360+',95%,82%)':shade(base,.55);
@@ -1446,8 +1481,8 @@ function renderShop(){const mkx=(t,c,x)=>{const e=document.createElement(t);if(c
     if(t!=='r'&&have){const on=pref.eq[t]===c,u=mkx('button','b'+(on?' on':''),on?'✔ Activo':'Usar');u.onclick=()=>{pref.eq[t]=on?'':c;savePref();renderShop()};rw.append(u)}
     if(i<8){const b=mkx('button','b','💎 '+V.p[i]);b.onclick=()=>{const e=buyV(t,i);renderShop();if(e)msg(e)};rw.append(b)}card.append(rw);gr.append(card)}g.append(gr)});
   g.append(mkx('div','vd','Los vales de revivir se eligen cuando mueres en una partida.'));return}
- if(shTab==='c'){CHESTS.forEach(c=>{const d=mkx('div','vc'),b=mkx('button','b','💎 '+c.p);d.append(mkx('b','',c.i+' '+c.n),mkx('div','vd',c.d));if(c.w){const tot=c.w.reduce((a,b)=>a+b,0);d.append(mkx('div','vd','Probabilidades: '+c.w.map((w,i)=>TIERS[i][0]+' '+Math.round(w/tot*1000)/10+'%').join(' · ')))}
-   b.onclick=()=>{const r=openChest(c);if(typeof r==='string'){msg(r);return}renderShop();$('shn').textContent='🎉 Obtuviste: '+r.join(' · ');if(lastGot.length){const gr=mkx('div','vg');lastGot.forEach(c=>{const cv=document.createElement('canvas');cv.className='tkc';skc.push([cv,{t:c[0],i:+c.slice(1)-1},'v']);gr.append(cv)});$('shn').append(gr)}};d.append(b);g.append(d)});return}
+ if(shTab==='c'){CHESTS.forEach(c=>{const d=mkx('div','vc'),b=mkx('button','b','💎 '+c.p),cvx=document.createElement('canvas');cvx.className='tkc';skc.push([cvx,{id:c.id},'c']);d.append(cvx,mkx('b','',c.i+' '+c.n),mkx('div','vd',c.d));if(c.w){const tot=c.w.reduce((a,b)=>a+b,0);d.append(mkx('div','vd','Probabilidades: '+c.w.map((w,i)=>TIERS[i][0]+' '+Math.round(w/tot*1000)/10+'%').join(' · ')))}
+   b.onclick=()=>{if(chBusy)return;const r=openChest(c);if(typeof r==='string'){msg(r);return}chBusy=1;chAnim={id:c.id,t0:performance.now()};const got=lastGot.slice();$('shd').textContent='💎 '+pref.dm;msg('🎁 Abriendo…');setTimeout(()=>{chAnim=null;chBusy=0;renderShop();$('shn').textContent='🎉 Obtuviste: '+r.join(' · ');if(got.length){const gr=mkx('div','vg');got.forEach(c=>{const cv=document.createElement('canvas');cv.className='tkc';skc.push([cv,{t:c[0],i:+c.slice(1)-1},'v']);gr.append(cv)});$('shn').append(gr)}},1600)};d.append(b);g.append(d)});return}
  PK.forEach(p=>{const have=pref.pk[p.id]||0,row=mkx('div','vr'),on=pref.pe===p.id;row.append(mkx('b','',p.i),mkx('span','',p.n+' · empiezas con '+Object.keys(p.u).map(t=>p.u[t]+' '+({soldier:'lanceros',archer:'arqueros',mage:'magos',healer:'sanadores',bomber:'bombarderos'})[t]).join(', ')),mkx('b','','x'+have));
   if(have){const u=mkx('button','b'+(on?' on':''),on?'✔ Equipado':'Equipar');u.onclick=()=>{pref.pe=on?'':p.id;savePref();renderShop()};row.append(u)}
   const b=mkx('button','b','💎 '+p.p);b.onclick=()=>{if(pref.dm<p.p){msg('Faltan '+(p.p-pref.dm)+' 💎');return}pref.dm-=p.p;pref.pk[p.id]=(pref.pk[p.id]||0)+1;savePref();hud();renderShop()};row.append(b);g.append(row)});
@@ -1458,7 +1493,7 @@ function closeSkins(){spOn=0;$('sp').style.display='none'}
 function spTabs(){const t=$('spt');t.innerHTML='';[['k','👑 Rey'],['t','🪖 Tropas']].forEach(([id,nm])=>{const b=document.createElement('button');b.className='b'+(id===spKindV?' on':'');b.textContent=nm;b.onclick=()=>{spKindV=id;renderSkins('sg',0,id);spTabs()};t.append(b)})}
 function renderSkins(id,shop,kind){kind=kind||'k';const g=$(id),mk=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x)e.textContent=x;return e},T=kind==='t',
  eq=s=>{if(T){pref.tk=s.id;if(P)P.tk=s.id}else{pref.sk=s.id;if(P)P.sk=s.id;mpSkin(s.id)}savePref();renderSkins(id,shop,kind)};g.innerHTML='';skc.length=0;g.className='sg';
- const owned=T?pref.tow:pref.own,cur=T?pref.tk:pref.sk,list=T?[{id:'',q:'c',pr:0,name:'Clásicas',desc:'Las tropas de siempre'},...troopSkins()]:SKINS.filter(s=>!s.fd||(!shop&&owned.includes(s.id))),price=s=>T?troopPrice(s):s.pr;
+ const owned=T?pref.tow:pref.own,cur=T?pref.tk:pref.sk,list=T?[{id:'',q:'c',pr:0,name:'Clásicas',desc:'Las tropas de siempre'},...troopSkins()]:SKINS.filter(s=>!s.fd||(!shop&&owned.includes(s.id))),price=s=>T?troopPrice(s):skinPrice(s.pr);
  list.sort((a,b)=>price(a)-price(b)).filter(s=>shop?(!T||s.id):(s.id===''||owned.includes(s.id))).forEach(s=>{const own=s.id===''||owned.includes(s.id),on=cur===s.id,d=mk('div','sk'+(on?' on':'')),c=document.createElement('canvas');c.width=c.height=160;
   const qn=QN[s.q]||QN.c;d.style.borderColor=on?'#e0a020':qn[1];const qb=mk('i','',qn[0]);qb.style.background=qn[1];d.append(c,qb,mk('b','',(T&&s.id?'🪖 ':'')+s.name),mk('div','',shop?(T?'Soldados, arqueros, magos, bombarderos y sanadores':s.desc):on?'✔ Equipado':s.desc));
   if(!T)d.append(mk('div','','✨ '+(SKFX[s.id]||'')));
@@ -1467,7 +1502,7 @@ function renderSkins(id,shop,kind){kind=kind||'k';const g=$(id),mk=(t,c,x)=>{con
   else d.onclick=()=>eq(s);
   g.appendChild(d);skc.push([c,s,kind])})}
 function spLoop(){if(!spOn)return;const o=ctx,t=performance.now();
- skc.forEach(([c,s,kd])=>{if(kd==='v'){drawTicket(c,s.t,s.i,t);return}ctx=c.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,160,160);
+ skc.forEach(([c,s,kd])=>{if(kd==='v'){drawTicket(c,s.t,s.i,t);return}if(kd==='c'){try{drawChestImg(c,s.id,t)}catch(e){}return}ctx=c.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,160,160);
   if(kd==='t'){const T=TH[s.id]||{soldier:(v,t,c)=>dSoldier(v,t,c),archer:(v,t,c)=>dArcher(v,t,c),mage:(v,t,c)=>dMage(v,t,c),bomber:(v,t,c)=>dBomber(v,t,c)};[['soldier',44,48],['archer',116,48],['mage',44,112],['bomber',116,112]].forEach(([u,x,y])=>{ctx.save();ctx.translate(x,y);ctx.scale(1.45,1.45);try{T[u](2,t,'#4f86e6')}catch(e){}ctx.restore()})}
   else{ctx.translate(80,92);ctx.scale(1.5,1.5);ctx.rotate(-Math.PI/2);dKing(t,1,'#4f86e6',s)}});
  ctx=o;requestAnimationFrame(spLoop)}
