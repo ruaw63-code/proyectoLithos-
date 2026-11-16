@@ -115,7 +115,8 @@ function lootStart(c){const h=hero,q=c.q||0,fl=D.floor;if(q>=1)soulGain(q>=3?60:
  const Q=[];if(Math.random()<.7+q*.1)Q.push({t:'w',w:rollWeapon(fl,q*.12)});if(Math.random()<.4+q*.1)Q.push({t:'g',g:rollGear(fl,q*.12)});if(!Q.length)Q.push({t:'w',w:rollWeapon(fl,q*.12)});if(Math.random()<.28+q*.2)Q.push({t:'r'});if(c.cards)Q.push({t:'c'});
  D.paused=true;D.lootQ=Q;nextLoot(gold)}
 function nextLoot(g0){const it=D.lootQ.shift();if(!it){closeMenu();return}if(it.t==='w')weaponMenu(it.w,g0);else if(it.t==='g')gearMenu(it.g,g0);else if(it.t==='r')runeMenu();else cardMenu(g0)}
-function equipW(s,i){const h=hero;{const o=h.wps[s];if(o&&o.fd&&o!==i&&!D.cheated)fdSeal(o.id,o)}h.wps[s]=i;h.wi=s;h.atk=null;h.wo=0;h.pull=0;h.cd=D.t+200;toast(WP[i.id].i+' '+wName(i));sparks(h.x,h.y-16,rc(i.q),14,4);sfx('upgrade')}
+function equipW(s,i){const h=hero;try{const o0=h.wps[s];if(D.on&&!D.hub&&o0&&o0.b0&&i&&i!==o0&&!i.b0&&!i.fd){i.b0={el:i.el,elq:i.elq,fx:i.fx||null};i.el=o0.el;i.elq=o0.elq;i.fx=o0.fx||null;WC.delete(i)}}catch(e){} /* las mejoras de efecto de esta partida pasan al arma nueva */
+ {const o=h.wps[s];if(o&&o.fd&&o!==i&&!D.cheated)fdSeal(o.id,o)}h.wps[s]=i;h.wi=s;h.atk=null;h.wo=0;h.pull=0;h.cd=D.t+200;toast(WP[i.id].i+' '+wName(i));sparks(h.x,h.y-16,rc(i.q),14,4);sfx('upgrade')}
 function slotHtml(s){const i=hero.wps[s];return'<small>ARMA '+(s+1)+(s===hero.wi?' (en mano)':'')+'</small>'+(i?'<i>'+wImg(i,40)+'</i><b style="color:'+rc(i.q)+'">'+wName(i)+'</b>':'<i>➕</i><b>Vacío</b>')}
 function weaponMenu(inst,g0,cb){if(!cb){cb=()=>nextLoot();cb.loot=1}const b=boxEl(),h=hero;
  b.innerHTML='<div class="tpb dgc"><h3>'+(D.shopping?'🛒 Comprar':'🎁 ¡Cofre abierto!')+'</h3>'+(g0?'<div class="dgg">+'+g0+' 🪙</div>':'')+'<div class="dgit" style="border-color:'+rc(inst.q)+'">'+wCard(inst)+'</div><p class="dgq">¿En cuál espacio quieres guardar esta arma?</p><div class="dgsl"><button class="dgslb" data-s="0">'+slotHtml(0)+'</button><button class="dgslb" data-s="1">'+slotHtml(1)+'</button></div>'+(D.shopping?'<button class="b dgno">↩️ No comprar</button>':(cb.loot&&pouchFree()>0?'<button class="b dgpk">🎒 Guardar en el botín</button>':'')+'<button class="b dgno">🗑️ Descartar</button>')+'</div>';b.style.display='flex';
@@ -223,7 +224,7 @@ function eqPanel(){const h=hero;let s='<div class="dgeqp">';
  for(let i=0;i<2;i++)s+='<div class="dgit" style="border-color:'+(h.wps[i]?rc(h.wps[i].q):'#555')+'">'+(h.wps[i]?'<small>ARMA '+(i+1)+(i===h.wi?' (en mano)':'')+'</small>'+wCard(h.wps[i]):'<div class="dgi"><i>➕</i><div><b>Arma '+(i+1)+' vacía</b></div></div>')+'</div>';
  for(const k in h.gear){const g=h.gear[k];if(g)s+='<div class="dgit" style="border-color:'+rc(g.q)+'">'+gCard(g)+'</div>'}
  for(const p of D.pets)s+='<div class="dgit" style="border-color:#7be07b"><div class="dgi"><i>'+PET[p.k].i+'</i><div><b>'+PET[p.k].n+' Nv.'+p.lv+'</b><small>❤ '+Math.round(p.hp)+'/'+p.max+' · Daño '+Math.round(p.dm)+(p.down?' · 💫 caído (revive pronto)':'')+'</small></div></div></div>';
- return s+'<small>🎒 Botín '+D.pouch.length+'/'+POUCH_CAP+' · Punto de salida al superar el piso '+(Math.floor((D.floor-1)/10)+1)*10+'</small><br><small>Daño x'+h.dmgM.toFixed(2)+' · Crítico '+Math.round(h.crit*100)+'%'+(h.multi?' · +'+h.multi+' proyectil':'')+(h.wave?' · Onda '+h.wave:'')+'</small></div>'}
+ return s+'<small>🎒 Botín '+D.pouch.length+'/'+POUCH_CAP+' · Punto de salida al superar el piso '+(Math.floor((D.floor-1)/10)+1)*10+'</small><br><small>Daño x'+h.dmgM.toFixed(2)+' · Crítico '+Math.round(h.crit*100)+'%'+(h.multi?' · +'+h.multi+' proyectil':'')+(h.wave?' · Onda '+h.wave:'')+'</small><br><small>Totales (equipo + mejoras): 🧛 cura '+(h.vamp||0)+' al matar · 💗 regen '+(h.regenH||0)+' · ❤️ vida máx '+Math.round(h.max)+' · 🔰 escudo '+h.shMax+' · ⚡ ataque x'+h.rateM.toFixed(2)+' · 👟 vel x'+h.spdM.toFixed(2)+' · 🌀 esquiva x'+(h.dashM||1).toFixed(2)+' · 🍀 oro x'+(h.goldM||1).toFixed(2)+'</small></div>'}
 /* ---------- mochila persistente, runas, forja y preparación (v27) ---------- */
 function DI(){let L=pref.dgi;if(!L||typeof L!=='object')L=pref.dgi={};
  if(!Array.isArray(L.bag))L.bag=[];if(!L.eq||typeof L.eq!=='object')L.eq={w:[winst('sword',0,null),null],g:{}};if(!Array.isArray(L.eq.w))L.eq.w=[null,null];if(!L.eq.g)L.eq.g={};
@@ -626,6 +627,7 @@ function rewardBoss(){D.bosses++;if(D.cheated||D.co)return;soulGain(6+D.floor);
 function stepHero(dt){const h=hero;if(h.dead)return;
  let ix=joy.x,iy=joy.y;if(keys.a||keys.arrowleft)ix-=1;if(keys.d||keys.arrowright)ix+=1;if(keys.w||keys.arrowup)iy-=1;if(keys.s||keys.arrowdown)iy+=1;const il=Math.hypot(ix,iy);if(il>1){ix/=il;iy/=il}
  const atkK=inp.atk||keys[' ']||keys.j;
+ if(!isFinite(h.dashM)||h.dashM<=0)h.dashM=.25;if(!(h.dashCd<=3000))h.dashCd=0;if(h.dashT>0&&(!isFinite(h.dashT)||D.t-(h.dashS||0)>700||D.t<(h.dashS||0)))h.dashT=0; /* seguro anti-atasco del dash */
  if(h.dashT>0){h.dashT-=dt*16.67;h.vx=Math.cos(h.dashAng)*13;h.vy=Math.sin(h.dashAng)*13;if(Math.floor(D.t/16)%2===0)PT.push({x:h.x,y:h.y,vx:0,vy:0,l:260,m:260,c:'ghost',s:1,g:0,face:h.face,gh:1});if(h.dashT<=0){h.vx*=.35;h.vy*=.35;h.sqv+=.3}}
  else{const sp=3.05*h.spdM*(h.atk?.55:1)*(h.rootT>D.t||h.paraT>D.t?0:1)*(h.slowT>D.t?(h.slowK||1):1);h.vx+=(ix*sp-h.vx)*.2*dt;h.vy+=(iy*sp-h.vy)*.2*dt}
  if(h.paraT>D.t){h.atk=null;h.wo=0;if(Math.random()<.6)sparks(h.x+rnd(-10,10),h.y-rnd(4,34),'#7fe8ff',2,2.5)}else if(!h.atk&&atkK)startAttack();
@@ -655,7 +657,7 @@ function stepHero(dt){const h=hero;if(h.dead)return;
  if(h.regenH>0){h.regT+=dt*16.67;if(h.regT>3000/h.regenH){h.regT=0;if(h.hp<h.max)healHero(1)}}
  h.trail=h.trail.filter(t=>D.t-t.t<200)}
 function dash(){if(D.co&&D.co.role==='client'){coSend({t:'dgdash'});return}const h=hero;if(h.dead||h.dashCd>0||h.dashT>0||D.paused||h.paraT>D.t)return;let ix=joy.x,iy=joy.y;if(keys.a)ix-=1;if(keys.d)ix+=1;if(keys.w)iy-=1;if(keys.s)iy+=1;
- h.dashAng=Math.hypot(ix,iy)>.2?Math.atan2(iy,ix):(Math.hypot(h.vx,h.vy)>.8?Math.atan2(h.vy,h.vx):h.aim);h.dashT=190;h.rootT=0;h.dashCd=950*Math.max(.25,h.dashM);h.inv=D.t+330;h.atk=null;h.wo=0;h.sqv-=.4;dust(h.x,h.y,8);sfx('swing')}
+ h.dashAng=Math.hypot(ix,iy)>.2?Math.atan2(iy,ix):(Math.hypot(h.vx,h.vy)>.8?Math.atan2(h.vy,h.vx):h.aim);h.dashT=190;h.dashS=D.t;h.rootT=0;h.dashCd=950*Math.max(.25,isFinite(h.dashM)?h.dashM:1);h.inv=D.t+330;h.atk=null;h.wo=0;h.sqv-=.4;dust(h.x,h.y,8);sfx('swing')}
 function swapWeapon(){if(D.co&&D.co.role==='client'){coSend({t:'dgswap'});return}const h=hero;if(!h.wps[0]||!h.wps[1]||h.dead)return;h.atk=null;h.wo=0;h.pull=0;h.wi=1-h.wi;h.cd=D.t+160;const f=curW();num(h.x,h.y-48,f.i+' '+wName(f.inst),'#fff');sfx('pick');h.sqv+=.2}
 function update(dt){
  D.t+=dt*16.67;const now=D.t;
@@ -786,7 +788,7 @@ function frame0(n){const cv0=cv;if(!D.on)return;const stg=$('stage');if(stg&&!st
 /* ====================== partida: inicio, piso siguiente, fin ====================== */
 function buildFloor(keep){const fl=D.floor;th=THEMES[(fl-1)%THEMES.length];gen(fl);DGART.prep(rooms,tile,MW,MH,(fl-1)%THEMES.length,th);const R=rooms[0];KF=[];E=[];PR=[];PT=[];PK=[];NUM=[];D.chests=[];D.pools=[];D.webs=[];D.fall=[];D.bw=[];D.beams=[];D.bossCard=null;D.room=null;D.boss=null;D.fade=null;placeTraps(fl);hero=mkHero(R.px,R.py,keep);if(D.co&&D.co.role==='host')coFloorHeroes(keep,R);cam={x:R.px,y:R.py};
  D.props=[];D.bolts=[];D.rings=[];D.pets=D.pets||[];
- rooms.forEach(r=>{if(r.type==='treasure'){D.chests.push({x:r.px,y:r.py-8,open:0,q:1,cards:true});const want=[];if(fl>=2&&Math.random()<.33)want.push('table');if(Math.random()<.42||D.noShop>=2){want.push('shop');D.noShop=0}else D.noShop=(D.noShop||0)+1;if(Math.random()<.3)want.push('forge');
+ rooms.forEach(r=>{if(r.type==='treasure'){D.chests.push({x:r.px,y:r.py-8,open:0,q:1,cards:true});const want=[];if(fl>=2&&Math.random()<.33)want.push('table');if(Math.random()<.42||D.noShop>=2){want.push('shop');D.noShop=0}else D.noShop=(D.noShop||0)+1;if(Math.random()<.34||(D.noForge|0)>=2){want.push('forge');D.noForge=0}else D.noForge=(D.noForge|0)+1;
   const cxT=r.x0+(r.w>>1),topOk=x=>tile(x,r.y0-1)===0&&tile(x-1,r.y0-1)===0&&tile(x+1,r.y0-1)===0,sl=[[(r.x0+1.8)*T,(r.y0+.95)*T],[(r.x0+r.w-1.8)*T,(r.y0+.95)*T],topOk(cxT)?[r.px,(r.y0+.95)*T]:[(r.x0+2.2)*T,(r.y0+r.h-.95)*T]].sort(()=>Math.random()-.5);
   want.forEach((k,i)=>{const px=sl[i][0],py=sl[i][1];D.props.push(k==='shop'?mkShop(px,py):{k,x:px,y:py,armed:true})})}});
  D.pets.forEach((p,i)=>{p.x=R.px+rnd(-26,26);p.y=R.py+22+i*10;p.vx=p.vy=0;if(keep)petLvl(p);if(p.down)petRevive(p,.5)});
@@ -913,7 +915,7 @@ function buildHub(){MW=48;MH=48;map=new Uint8Array(MW*MH);doors=[];const X0=16,Y
  KF=[];E=[];PR=[];PT=[];PK=[];NUM=[];D.chests=[];D.pools=[];D.webs=[];D.fall=[];D.bw=[];D.beams=[];D.bossCard=null;D.traps=[];D.boss=null;D.fade=null;D.props=[];D.bolts=[];D.rings=[];D.pets=[];
  hero=mkHero(R.px,(Y0+H-2.2)*T,null);applyLoadout();cam={x:hero.x,y:hero.y};
  const st=(act,tx,ic,lb,col)=>D.props.push({k:'st',act,x:(X0+tx)*T,y:(Y0+.95)*T,ic,lb,col,armed:true});
- st('weapons',2.2,'⚔️','Armería','#7a5a3a');st('armor',4.4,'🛡️','Armadura','#4a5f8a');st('petshop',6.6,'🔮','Cristal de invocación','#5a3aa8');st('pets',10.8,'🐾','Mascotas','#5a7a4a');st('store',13,'📦','Almacén','#7a6a3a');st('menu',15.2,'📋','Menú','#5a4a7a');
+ st('weapons',1.4,'⚔️','Armería','#7a5a3a');st('armor',3.3,'🛡️','Armadura','#4a5f8a');st('petshop',10.6,'🔮','Cristal de invocación','#5a3aa8');st('pets',12.2,'🐾','Mascotas','#5a7a4a');st('store',13.8,'📦','Almacén','#7a6a3a');st('menu',15.4,'📋','Menú','#5a4a7a');
  PK.push({t:'portal',x:(HX+HW/2)*T,y:(HY0+1.15)*T,wy:HY0*T,door:1,hub:1,vx:0,vy:0,z:0,vz:0,l:0,permanent:1});
  D.banner={t:D.t,txt:'Sala del héroe'};D.room=R;try{hubPets()}catch(e){}}
 function hubPets(){const L=DI(),want=[];if(pref.fd&&pref.fd.pet&&!pref.fd.petOff)want.push('phoenix');if(fdOn('pet'))want.push('firefly');if(L.petSel&&L.pets.includes(L.petSel)&&PET[L.petSel])want.push(L.petSel);D.pets=D.pets.filter(p=>p.tmp||want.includes(p.k));want.forEach(k=>{if(!D.pets.some(p=>p.k===k))addPet(k)})}
@@ -1266,14 +1268,15 @@ const MZW={espada:'sword',hacha:'axe',lanza:'spear',arco:'bow',baston:'staff',da
   combate:'limpiar · matar · congelar S · jefe [ogro|lobo|slime|golem|arana|lich|arquitecto] · enemigo TIPO [N] · elite TIPO',
   objetos:'cofre [0-4] · botin [N] · arma NOMBRE [calidad 0-5] [elemento] · equipo PIEZA [calidad 0-5] · mejora NOMBRE · mascota lobo|caballero|mago|dragon|fenix · runas ELEMENTO CALIDAD N · xp N',
   extras:'tienda · mesa · forja · trampa pinchos|fuego|dardos · limpiartrampas · estado · errores · esencia N · fps1 (monitor FPS) · fps2 · salir (cierra sesión de comandos)'},
- MZH='🗝️ Comandos de mazmorra (con o sin "mz" delante). Escribe ayuda CATEGORÍA para ver solo una: jugador, mazmorra, combate, objetos, extras.\n'+Object.entries(MZC).map(([k,v])=>'• '+k.toUpperCase()+': '+v).join('\n')+'\nUsar comandos desactiva las recompensas de esa partida.',
+ MZH='🗝️ Comandos de mazmorra (con o sin "mz" delante). Escribe ayuda CATEGORÍA para ver solo una: jugador, mazmorra, combate, objetos, extras.\n'+Object.entries(MZC).map(([k,v])=>'• '+k.toUpperCase()+': '+v).join('\n')+'\nSolo los comandos que regalan objetos o poder (arma, equipo, mejora, mascota, botin, cofre, oro, vidamax, dano, velocidad, inmune) desactivan las recompensas de esa partida; los demás (piso, ir, curar, mapa, estado…) no.',
  nrm=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 function rarArg(v){const x=nrm(v);if(x in MZR)return MZR[x];const n=Math.floor(+x);return isFinite(n)&&x!==''?clamp(n,0,5):null}
 function mkGearOf(slot,q){const T=pick(GT.filter(x=>x.t===slot)),m={};for(const k in T.m){const v=T.m[k]*RAR[q].m;m[k]=Number.isInteger(T.m[k])?Math.max(1,Math.round(v)):Math.round(v*100)/100}
  if(q>=2&&Math.random()<.75){const x=pick(GXT),k=Object.keys(x)[0];m[k]=(m[k]||0)+x[k]}return{t:T.t,n:T.n,i:T.i,q,m}}
 function freeSpot(r){for(let i=0;i<24;i++){const a=rnd(0,TAU),x=hero.x+Math.cos(a)*r,y=hero.y+Math.sin(a)*r;if(!solidT(Math.floor(x/T),Math.floor(y/T)))return[x,y]}return[hero.x,hero.y]}
+const CHEAT_CMDS=new Set(['arma','equipo','mejora','mascota','botin','cofre','oro','vidamax','dano','daño','velocidad','inmune']);
 D.cmd=function(a){const c=nrm(a[0]),arg=a.slice(1),v0=arg[0],nv=+String(v0).replace(',','.'),has=v0!==undefined&&isFinite(nv),N=(df,mn,mx)=>has?clamp(nv,mn,mx):df;
- if(c==='almas'||c==='esencia'){const L=DI(),n=Math.floor(N(SOUL_PET,1,1e6));L.souls+=n;try{savePref()}catch(e){}if(D.on&&!D.hub)D.cheated=1;return'✨ +'+n+' Esencia de alma (total '+L.souls+')'}
+ if(c==='almas'||c==='esencia'){const L=DI(),n=Math.floor(N(SOUL_PET,1,1e6));L.souls+=n;try{savePref()}catch(e){}return'✨ +'+n+' Esencia de alma (total '+L.souls+')'}
  if(c===''||c==='ayuda'||c==='help'){const cat=nrm(v0);return MZC[cat]?'• '+cat.toUpperCase()+': '+MZC[cat]:MZH}
  if(D.co)return'🗝️ Sin comandos en el modo cooperativo';if(!D.on||!hero||D.hub)return'🗝️ No hay una mazmorra activa (en la sala previa no se usan comandos de mazmorra)';
  const h=hero;let r;
@@ -1326,7 +1329,8 @@ D.cmd=function(a){const c=nrm(a[0]),arg=a.slice(1),v0=arg[0],nv=+String(v0).repl
   case'salida':checkpoint();r='🏁 Punto de salida abierto';break;
   case'botin':{const n=Math.floor(N(3,1,12));for(let i=0;i<n&&pouchFree()>0;i++)pouchAdd(Math.random()<.6?{k:'w',w:rollWeapon(D.floor,.1)}:{k:'g',g:rollGear(D.floor,.1)});r='🎒 Botín: '+D.pouch.length+'/'+POUCH_CAP;break}
   default:return'❓ Comando desconocido. Escribe ayuda'}
- D.cheated=1;return r};
+ if(CHEAT_CMDS.has(c))D.cheated=1; /* solo los comandos que regalan objetos o poder anulan el botín; moverse, curar, mapa, estado, etc. NO */
+ return r};
 /* ====================== COOPERATIVO (v40): hasta 4 jugadores · online por código o red local ======================
    El anfitrión simula TODO (como en el Reino): los demás envían su control (joystick, ataque, esquiva) y reciben instantáneas.
    Técnica: «cambio de héroe». Las funciones de la mazmorra usan la variable global `hero`; en cooperativo se pone

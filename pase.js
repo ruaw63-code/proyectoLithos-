@@ -35,10 +35,19 @@
     if (!p || typeof p !== 'object' || Array.isArray(p)) p = pref.ps = {};
     if (!(p.xp >= 0)) p.xp = 0;
     if (!p.cl || typeof p.cl !== 'object' || Array.isArray(p.cl)) p.cl = {};
+    if (!p.cp || typeof p.cp !== 'object' || Array.isArray(p.cp)) p.cp = {};
+    if (!p.v2) { p.v2 = 1; if (Object.keys(p.cl).length) { p.own = 1; for (var k in p.cl) p.cp[k] = 1; } } /* quien ya había reclamado todo antes de dividir el pase conserva ambos */
     if (!Array.isArray(pref.kfo)) pref.kfo = [];
     if (typeof pref.kfx !== 'string') pref.kfx = '';
     if (pref.kfx && pref.kfo.indexOf(pref.kfx) < 0) pref.kfx = '';
     return p;
+  }
+  var PRICE = 7500; /* 💎 que cuesta el pase: cámbialo aquí */
+  function owned() { return !!st().own; }
+  function buy() {
+    if (owned()) return true;
+    if (pref.dm < PRICE) { toast('Te faltan ' + (PRICE - pref.dm) + ' 💎 para el pase'); return false; }
+    pref.dm -= PRICE; st().own = 1; savePref(); try { hud(); } catch (e) { } label(); toast('👑 ¡Pase Premium desbloqueado! Ya puedes reclamar lo Premium que llevas'); render(); return true;
   }
   function levelOf(xp) { var lo = 0, hi = MAXL; while (lo < hi) { var m = (lo + hi + 1) >> 1; if (CUM[m] <= xp) lo = m; else hi = m - 1; } return lo; }
   function level() { return levelOf(st().xp); }
@@ -49,21 +58,24 @@
   function tierV(l) { return l <= 100 ? 0 : l <= 200 ? 1 : 2; }
   function rewards(l) {
     var m = l % 10, a = [];
-    if (m === 0) { if (l % 20 === 0) a.push({ k: 'vale', t: VT[(l / 20) % 4], i: tierV(l) }); else a.push({ k: 'dm', n: dmAmt(l) * 2 }); }
-    else if (m === 1 || m === 2 || m === 8) a.push({ k: 'dm', n: dmAmt(l) });
+    if (m === 0) { if (l % 20 === 0) { a.push({ k: 'vale', t: VT[(l / 20) % 4], i: tierV(l) }); a.push({ k: 'dm', n: dmAmt(l), f: 1 }); } else a.push({ k: 'dm', n: dmAmt(l) * 2, f: 1 }); }
+    else if (m === 1 || m === 8) a.push({ k: 'dm', n: dmAmt(l), f: 1 });
+    else if (m === 2) a.push({ k: 'dm', n: dmAmt(l) });
     else if (m === 5) a.push({ k: 'dm', n: dmAmt(l) * 2 });
-    else if (m === 3) { var ids = ['sol', 'arc', 'hea', 'bom', 'mag', 'mix']; a.push({ k: 'pack', id: ids[((l - 3) / 10) % 6 | 0], n: l > 150 ? 2 : 1 }); }
+    else if (m === 3) { var ids = ['sol', 'arc', 'hea', 'bom', 'mag', 'mix']; a.push({ k: 'pack', id: ids[((l - 3) / 10) % 6 | 0], n: l > 150 ? 2 : 1, f: 1 }); }
     else if (m === 4) a.push({ k: 'weapon', id: WIDS[((l - 4) / 10) % WIDS.length | 0], q: Math.min(4, 1 + Math.floor(l / 70)) });
-    else if (m === 6) a.push({ k: 'soul', n: 100 + l * 3 });
+    else if (m === 6) a.push({ k: 'soul', n: 100 + l * 3, f: 1 });
     else if (m === 7) a.push({ k: 'chest', id: (l % 50 === 47) ? 'v3' : 'v1' });
     else if (m === 9) a.push({ k: 'gear', fl: Math.max(1, Math.min(40, Math.ceil(l / 8))) });
     if (l % 50 === 0) a.push({ k: 'dm', n: 300 * (l / 50) });
     if (l === 250) a.push({ k: 'weapon', id: 'sword', q: 5, tag: 'divina' });
-    if (KFX_AT[l]) a.push({ k: 'kfx', id: KFX_AT[l] });
-    if (SKIN_AT[l]) a.push({ k: 'skin', id: SKIN_AT[l] });
+    if (KFX_AT[l]) a.push({ k: 'kfx', id: KFX_AT[l], f: l <= 45 ? 1 : 0 });
+    if (SKIN_AT[l]) a.push({ k: 'skin', id: SKIN_AT[l], f: (l === 10 || l === 25) ? 1 : 0 });
     if (FDW_AT[l]) a.push({ k: 'fdw' });
     return a;
   }
+  function freeR(l) { return rewards(l).filter(function (r) { return r.f; }); }
+  function premR(l) { return rewards(l).filter(function (r) { return !r.f; }); }
   function skinObj(id) { for (var i = 0; i < SKINS.length; i++) if (SKINS[i].id === id) return SKINS[i]; return null; }
   function describe(r) {
     switch (r.k) {
@@ -107,15 +119,19 @@
     }
     return null;
   }
-  function pendingLevels() { var L = level(), a = []; for (var l = 1; l <= L; l++) if (!st().cl[l]) a.push(l); return a; }
+  function pendingLevels() { var L = level(), a = [], S = st(); for (var l = 1; l <= L; l++) { if ((freeR(l).length && !S.cl[l]) || (S.own && premR(l).length && !S.cp[l])) a.push(l); } return a; }
   function needBag(rs) { var n = 0; rs.forEach(function (r) { if (r.k === 'weapon' || r.k === 'gear') n++; }); return n; }
   function claim(l, quiet) {
-    var S = st(); if (l > level() || S.cl[l]) return null;
-    var rs = rewards(l), nb = needBag(rs);
+    var S = st(); if (l > level()) return null;
+    var fr = freeR(l), pr = premR(l), parts = [];
+    var doF = fr.length && !S.cl[l], doP = S.own && pr.length && !S.cp[l];
+    if (doF) parts = parts.concat(fr); if (doP) parts = parts.concat(pr);
+    if (!parts.length) { if (!quiet && !S.own && pr.length && !S.cp[l]) toast('🔒 La recompensa Premium necesita el pase'); return null; }
+    var nb = needBag(parts);
     if (nb && (!window.DG || DG.bagFree() < nb)) { if (!quiet) toast('🎒 Tu mochila de la mazmorra está llena: libera espacio para reclamar el nivel ' + l); return false; }
     var out = [];
-    for (var i = 0; i < rs.length; i++) { var t = grant(rs[i]); if (t) out.push(t); }
-    S.cl[l] = 1; savePref(); try { hud(); } catch (e) { } label();
+    for (var i = 0; i < parts.length; i++) { var t = grant(parts[i]); if (t) out.push(t); }
+    if (doF) S.cl[l] = 1; if (doP) S.cp[l] = 1; savePref(); try { hud(); } catch (e) { } label();
     return out;
   }
   function claimAll() {
@@ -152,7 +168,7 @@
   }
   function label() {
     var e = $('psb'); if (!e) return; var L = level(), n = pendingLevels().length;
-    e.textContent = 'Pase Nv.' + L + (n ? ' ●' : '');
+    e.textContent = 'Pase Nv.' + L + (n ? ' ●' : owned() ? '' : ' 🔒');
   }
 
   /* ---------- interfaz (pase horizontal estilo Fortnite) ---------- */
@@ -170,12 +186,12 @@
       '.pzd .pv{width:118px;height:118px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:10px;background:radial-gradient(circle,rgba(255,255,255,.16),rgba(0,0,0,.2))}.pzd .pv canvas{width:118px;height:auto;max-height:118px}.pzd .pv .pe{font-size:64px;line-height:1}' +
       '.pzd .pt{flex:1;font-size:12px;line-height:1.35;min-width:0}.pzd .pt b{font-size:15px;color:#ffe27a;display:block}.pzd .pt div{margin:2px 0}.pzd .pt .b{margin-top:6px;padding:7px 12px;font-size:13px}' +
       '.pzs{display:flex;gap:6px;align-items:stretch;min-height:0}' +
-      '.pzlab{width:50px;flex:none;display:flex;flex-direction:column;font-size:10px;text-align:center;color:#ffe48a;line-height:1.1}.pzlab div{display:flex;align-items:center;justify-content:center}.pzlab div:nth-child(1){height:56px;color:#b9a6ff}.pzlab div:nth-child(2){height:124px}.pzlab div:nth-child(3){height:36px}' +
+      '.pzlab{width:50px;flex:none;display:flex;flex-direction:column;font-size:10px;text-align:center;color:#ffe48a;line-height:1.1}.pzlab div{display:flex;align-items:center;justify-content:center}.pzlab div:nth-child(1){height:112px;color:#ffd84a}.pzlab div:nth-child(2){height:112px;color:#9fe39f}.pzlab div:nth-child(3){height:36px}' +
       '#pztr{flex:1;overflow-x:auto;overflow-y:hidden;white-space:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:6px;cursor:grab}' +
       '.pcol{display:inline-block;width:92px;vertical-align:top;white-space:normal}' +
-      '.pcp{height:56px;border:2px dashed #5a5a7a;border-radius:8px;margin:0 3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:16px;opacity:.45;background:rgba(40,30,70,.35)}.pcp small{font-size:8px;color:#b9a6ff}' +
-      '.pcf{height:116px;margin:4px 3px;border:3px solid #555;border-radius:10px;background:linear-gradient(#2c3c2c,#141c14);position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:transform .15s}' +
-      '.pcf.sel{outline:3px solid #fff;transform:translateY(-4px)}.pcf.ok{box-shadow:0 0 12px 2px #5ad05a}.pcf.done{filter:grayscale(.75);opacity:.72}.pcf.big{background:linear-gradient(#4a3a1a,#1c1608)}' +
+      '.pcp{height:104px;margin:4px 3px;box-sizing:border-box;border:2px dashed #3d4a3d;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:16px;opacity:.45;background:rgba(40,30,70,.35)}.pcp small{font-size:8px;color:#b9a6ff}' +
+      '.pcf{height:104px;margin:4px 3px;box-sizing:border-box;border:3px solid #555;border-radius:10px;background:linear-gradient(#2c3c2c,#141c14);position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:transform .15s}' +
+      '.pcf.prem{background:linear-gradient(#4a3a14,#1e1606)}.pcf.sel{outline:3px solid #fff;transform:translateY(-4px)}.pcf.ok{box-shadow:0 0 12px 2px #5ad05a}.pcf.done{filter:grayscale(.75);opacity:.72}.pcf.big{background:linear-gradient(#4a3a1a,#1c1608)}' +
       '.pcf .pe{font-size:36px;line-height:1}.pcf canvas{width:80px;height:auto;max-height:70px}' +
       '.pcf small{font-size:10px;text-align:center;line-height:1.1;margin-top:3px;padding:0 3px;color:#eef5e6;max-height:24px;overflow:hidden}' +
       '.pcf .st{position:absolute;top:2px;right:3px;font-size:13px}.pcf .ex{position:absolute;top:2px;left:3px;font-size:10px;background:#000a;border-radius:6px;padding:0 4px;color:#ffe27a}' +
@@ -187,6 +203,7 @@
       '.pk{display:flex;align-items:center;gap:8px;padding:8px;margin:5px 0;border:3px solid #3a3a3a;border-radius:10px;background:rgba(0,0,0,.28)}.pk i{font-size:26px;font-style:normal}.pk div{flex:1;font-size:12px}.pk.on{border-color:#ffd84a}' +
       '#pzfx{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}' +
       '@media(max-height:560px){#pase .tpb{overflow-y:auto}#pase .tpb>*,#pzbody>*{flex-shrink:0}#pase .tpb h3{display:none}.pzd{min-height:0;padding:4px}.pzd .pv{width:64px;height:64px}.pzd .pv canvas{width:64px}.pzd .pv .pe{font-size:38px}.pzd .pt{font-size:11px}.pzbar{height:8px}.pzh b{font-size:14px}.pzt .b{padding:3px}.pznav .b{padding:4px}}' +
+      '.pzbuy{display:flex;gap:8px;align-items:center;background:rgba(255,176,32,.14);border:2px solid #ffb020;border-radius:10px;padding:6px 8px;margin:4px 0;text-align:left;font-size:11px;color:#ffe8b0}.pzbuy span{flex:1}.pzbuy .b{flex:none;padding:8px 10px;font-size:13px}' +
       '#pzx{position:fixed;top:44px;right:8px;z-index:70;background:rgba(0,0,0,.65);color:#ffe27a;font:bold 12px Trebuchet MS,sans-serif;padding:5px 9px;border-radius:12px;opacity:0;transition:opacity .4s;pointer-events:none}';
     document.head.appendChild(s);
   }
@@ -232,21 +249,40 @@
   function header() {
     var S = st(), L = level(), h = $('pzh'), lo = CUM[L], hi = L >= MAXL ? CUM[MAXL] : CUM[L + 1], pc = L >= MAXL ? 100 : Math.floor((S.xp - lo) / Math.max(1, hi - lo) * 100), m = mult();
     h.innerHTML = '<b>Temporada 1 · Fundadores</b><small>Nivel ' + L + ' / ' + MAXL + (L >= MAXL ? ' · ¡COMPLETADO!' : ' · ' + Math.floor(S.xp - lo) + ' / ' + (hi - lo) + ' XP') + (m > 1 ? ' · bonus de aspecto ×' + m.toFixed(2) : '') + '</small><div class="pzbar"><i style="width:' + pc + '%"></i></div>';
+    if (!owned()) { var bb = document.createElement('div'); bb.className = 'pzbuy'; bb.innerHTML = '<span>🎁 El carril GRATIS ya es tuyo. 👑 El carril PREMIUM (arriba) se desbloquea con el pase; lo que acumules queda guardado.</span>'; var bt2 = document.createElement('button'); bt2.className = 'b'; bt2.textContent = '👑 Premium · ' + PRICE + ' 💎'; bt2.onclick = buy; bb.appendChild(bt2); h.appendChild(bb); }
     var t = $('pzt'); t.innerHTML = '';
     [['r', '🎁 Recompensas'], ['e', '✨ Efectos de eliminación']].forEach(function (x) { var b = document.createElement('button'); b.className = 'b' + (tab === x[0] ? ' on' : ''); b.textContent = x[1]; b.onclick = function () { tab = x[0]; render(); }; t.appendChild(b); });
   }
+  var selR = 'f';
   function fillDetail() {
-    var box = $('pzd'); if (!box) return; var l = sel || 1, rs = rewards(l), L = level(), S = st(), done = !!S.cl[l], ok = !done && l <= L, main = mainOf(rs), rc = rcolor(main);
+    var box = $('pzd'); if (!box) return; var l = sel || 1, L = level(), S = st(), fr = freeR(l), pr = premR(l);
+    var rs = selR === 'p' ? pr : fr; if (!rs.length) { rs = fr.length ? fr : pr; selR = fr.length ? 'f' : 'p'; }
+    var main = mainOf(rs), rc = selR === 'p' ? '#ffd84a' : rcolor(main);
+    var canF = fr.length && !S.cl[l] && l <= L, canP = pr.length && !S.cp[l] && l <= L && owned(), lockP = pr.length && !S.cp[l] && !owned();
     box.style.borderColor = rc; box.innerHTML = '';
     var pv = document.createElement('div'); pv.className = 'pv'; pv.appendChild(visual(main)); box.appendChild(pv);
     var pt = document.createElement('div'); pt.className = 'pt';
-    var h = document.createElement('b'); h.textContent = 'Nivel ' + l + ' · ' + (done ? '✔ Reclamado' : ok ? '¡Disponible!' : '🔒 Bloqueado'); h.style.color = rc; pt.appendChild(h);
-    rs.forEach(function (r) { var d = describe(r), line = document.createElement('div'); line.textContent = d[0] + ' ' + d[1]; if (r === main) line.style.fontWeight = 'bold'; pt.appendChild(line); });
+    var h = document.createElement('b'); h.textContent = 'Nivel ' + l + (l > L ? ' · 🔒 Bloqueado' : (canF || canP) ? ' · ¡Disponible!' : lockP ? ' · 👑 Premium bloqueado' : ' · ✔ Reclamado'); h.style.color = rc; pt.appendChild(h);
+    function sect(t, arr, col, done) { if (!arr.length) return; var hd = document.createElement('div'); hd.style.cssText = 'font-size:10px;letter-spacing:1px;margin-top:3px;color:' + col; hd.textContent = t + (done ? ' · ✔ reclamado' : ''); pt.appendChild(hd);
+      arr.forEach(function (r) { var d = describe(r), line = document.createElement('div'); line.textContent = d[0] + ' ' + d[1]; if (r === main) line.style.fontWeight = 'bold'; pt.appendChild(line); }); }
+    sect('🎁 GRATIS', fr, '#9fe39f', !!S.cl[l]); sect('👑 PREMIUM', pr, '#ffd84a', !!S.cp[l]);
     var sk = rs.filter(function (r) { return r.k === 'skin'; })[0]; if (sk && SKFX[sk.id]) { var f = document.createElement('div'); f.style.color = '#9fe0ff'; f.textContent = '✨ ' + SKFX[sk.id]; pt.appendChild(f); }
     var fd = rs.filter(function (r) { return r.k === 'fdw'; })[0]; if (fd) { var f2 = document.createElement('div'); f2.style.color = '#ffe27a'; f2.textContent = 'Sube hasta Nv.20 al matar enemigos con ella en la mazmorra.'; pt.appendChild(f2); }
-    if (ok) { var b = document.createElement('button'); b.className = 'b'; b.textContent = '🎁 Reclamar'; b.onclick = function () { var o = claim(l); if (o && o.length) toast('🎁 ' + o.join(' · ')); render(); }; pt.appendChild(b); }
-    else if (!done) { var w = document.createElement('div'); w.style.color = '#9aa'; w.textContent = 'Te faltan ' + Math.max(0, Math.ceil(CUM[l] - S.xp)) + ' XP para el nivel ' + l + '.'; pt.appendChild(w); }
+    if (canF || canP) { var b = document.createElement('button'); b.className = 'b'; b.textContent = '🎁 Reclamar' + (canF && canP ? ' todo' : canP ? ' premium' : ' gratis'); b.onclick = function () { var o = claim(l); if (o && o.length) toast('🎁 ' + o.join(' · ')); render(); }; pt.appendChild(b); }
+    if (lockP && l <= L) { var b2 = document.createElement('button'); b2.className = 'b'; b2.textContent = '👑 Desbloquear Premium · ' + PRICE + ' 💎'; b2.onclick = buy; pt.appendChild(b2); }
+    if (l > L) { var w = document.createElement('div'); w.style.color = '#9aa'; w.textContent = 'Te faltan ' + Math.max(0, Math.ceil(CUM[l] - S.xp)) + ' XP para el nivel ' + l + '.'; pt.appendChild(w); }
     box.appendChild(pt);
+  }
+  function card(l, rs, row, L, S) {
+    var f = document.createElement('div');
+    if (!rs.length) { f.className = 'pcp'; f.innerHTML = '<small>—</small>'; return f; }
+    var main = mainOf(rs), done = row === 'p' ? !!S.cp[l] : !!S.cl[l], locked = row === 'p' && !owned(), ok = !done && l <= L && !locked;
+    f.className = 'pcf' + (row === 'p' ? ' prem' : '') + (done ? ' done' : ok ? ' ok' : '') + (isBig(l) && rs.some(function (r) { return r.k === 'skin' || r.k === 'fdw' || r.k === 'kfx'; }) ? ' big' : '') + (l === sel && row === selR ? ' sel' : '');
+    f.style.borderColor = row === 'p' ? '#d9a82a' : rcolor(main); f.dataset.l = l; f.dataset.r = row;
+    f.appendChild(visual(main)); var sm = document.createElement('small'); sm.textContent = shortLbl(main); f.appendChild(sm);
+    if (rs.length > 1) { var ex = document.createElement('span'); ex.className = 'ex'; ex.textContent = '+' + (rs.length - 1); f.appendChild(ex); }
+    var stt = document.createElement('span'); stt.className = 'st'; stt.textContent = done ? '✔' : ok ? '❗' : (locked ? '👑' : '🔒'); f.appendChild(stt);
+    return f;
   }
   function renderTrack(body) {
     var L = level(), S = st(); if (!sel) sel = pendingLevels()[0] || Math.min(MAXL, L + 1);
@@ -256,19 +292,14 @@
     var tr = document.createElement('div'); tr.id = 'pztr';
     var curCol = null, selCol = null;
     for (var l = 1; l <= MAXL; l++) {
-      var rs = rewards(l), main = mainOf(rs), done = !!S.cl[l], ok = !done && l <= L, col = document.createElement('div'); col.className = 'pcol'; col.dataset.l = l;
-      var pp = document.createElement('div'); pp.className = 'pcp'; pp.innerHTML = '🔒<small>Premium</small>'; col.appendChild(pp);
-      var f = document.createElement('div'); f.className = 'pcf' + (done ? ' done' : ok ? ' ok' : '') + (isBig(l) ? ' big' : '') + (l === sel ? ' sel' : ''); f.style.borderColor = rcolor(main); f.dataset.l = l;
-      f.appendChild(visual(main)); var sm = document.createElement('small'); sm.textContent = shortLbl(main); f.appendChild(sm);
-      if (rs.length > 1) { var ex = document.createElement('span'); ex.className = 'ex'; ex.textContent = '+' + (rs.length - 1); f.appendChild(ex); }
-      var stt = document.createElement('span'); stt.className = 'st'; stt.textContent = done ? '✔' : ok ? '❗' : '🔒'; f.appendChild(stt);
-      col.appendChild(f);
+      var col = document.createElement('div'); col.className = 'pcol'; col.dataset.l = l;
+      col.appendChild(card(l, premR(l), 'p', L, S)); col.appendChild(card(l, freeR(l), 'f', L, S));
       var bar = document.createElement('div'); bar.className = 'pcb';
       var fl = Math.max(0, Math.min(1, (S.xp - CUM[l - 1]) / need(l))), fr = l < MAXL ? Math.max(0, Math.min(1, (S.xp - CUM[l]) / need(l + 1))) : 0;
       bar.innerHTML = '<div class="ln l1"><i style="width:' + Math.max(0, Math.min(1, (fl - .5) * 2)) * 100 + '%"></i></div><div class="ln l2"><i style="width:' + Math.max(0, Math.min(1, fr * 2)) * 100 + '%"></i></div><div class="nd' + (l <= L ? ' on' : '') + (l === L ? ' cur' : '') + '">' + l + '</div>';
       col.appendChild(bar); tr.appendChild(col); if (l === L || (L === 0 && l === 1)) curCol = col; if (l === sel) selCol = col;
     }
-    tr.addEventListener('click', function (e) { var f = e.target.closest && e.target.closest('.pcf'); if (!f || tr._drag) return; selectLevel(+f.dataset.l); });
+    tr.addEventListener('click', function (e) { var f = e.target.closest && e.target.closest('.pcf'); if (!f || tr._drag) return; selectLevel(+f.dataset.l, f.dataset.r); });
     tr.addEventListener('wheel', function (e) { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { tr.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
     var dx = 0, sx = 0, dn = false;
     tr.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse') return; dn = true; sx = e.clientX; dx = tr.scrollLeft; tr._drag = false; });
@@ -281,13 +312,13 @@
     nb('📍 Mi nivel', function () { goTo(Math.max(1, L)); });
     nb('⭐ Próximo premio', function () { var n = 0; for (var q = Math.max(1, sel || L) + 1; q <= MAXL; q++) if (isBig(q)) { n = q; break; } if (n) { goTo(n); selectLevel(n); } });
     nb('▶', function () { tr.scrollBy({ left: tr.clientWidth * .8, behavior: 'smooth' }); });
-    var n0 = pendingLevels().length, ca = nb(n0 ? '🎁 Reclamar todo (' + n0 + ')' : 'Nada por reclamar', function () { if (pendingLevels().length) claimAll(); }); ca.style.flex = '1.6'; if (!n0) ca.style.opacity = '.5';
+    var n0 = pendingLevels().length, ow = owned(), ca = nb(n0 ? '🎁 Reclamar todo (' + n0 + ')' : !ow ? '👑 Premium · ' + PRICE + ' 💎' : 'Nada por reclamar', function () { if (pendingLevels().length) claimAll(); else if (!owned()) buy(); }); ca.style.flex = '1.6'; if (ow && !n0) ca.style.opacity = '.5';
     body.appendChild(nav);
     fillDetail(); body._tr = tr; body._cur = selCol || curCol;
   }
   function goTo(l) { var tr = $('pztr'); if (!tr) return; var c = tr.querySelector('.pcol[data-l="' + l + '"]'); if (c) tr.scrollTo({ left: Math.max(0, c.offsetLeft - tr.offsetLeft - tr.clientWidth / 2 + 46), behavior: 'smooth' }); }
-  function selectLevel(l) {
-    sel = l; var tr = $('pztr'); if (tr) { var o = tr.querySelector('.pcf.sel'); if (o) o.classList.remove('sel'); var n = tr.querySelector('.pcf[data-l="' + l + '"]'); if (n) n.classList.add('sel'); }
+  function selectLevel(l, row) {
+    sel = l; if (row) selR = row; var tr = $('pztr'); if (tr) { var o = tr.querySelector('.pcf.sel'); if (o) o.classList.remove('sel'); var n = tr.querySelector('.pcf[data-l="' + l + '"][data-r="' + selR + '"]') || tr.querySelector('.pcf[data-l="' + l + '"]'); if (n) n.classList.add('sel'); }
     fillDetail();
   }
   function animLoop() {
@@ -314,12 +345,12 @@
     });
     var n = document.createElement('div'); n.className = 'vd'; n.style.margin = '8px 4px'; n.textContent = 'El efecto se ve en tus bajas del Reino y de la mazmorra. Solo es visual: desaparece solo a los pocos segundos y no estorba.'; box.appendChild(n);
   }
-  function open() { build(); $('pase').style.display = 'flex'; tab = 'r'; sel = 0; var b = $('pzbody'); if (b) b.innerHTML = ''; render(); }
+  function open() { build(); $('pase').style.display = 'flex'; tab = 'r'; sel = 0; selR = 'f'; var b = $('pzbody'); if (b) b.innerHTML = ''; render(); }
   function close() { var e = $('pase'); if (e) e.style.display = 'none'; animOn = 0; label(); }
 
   window.PASE = {
     xp: xp, tick: tick, open: open, close: close, level: level, rewards: rewards, claim: claim, claimAll: claimAll,
-    max: MAXL, need: need, cum: CUM, pending: pendingLevels, describe: describe, label: label, state: st, kfx: KFX, setXp: function (v) { st().xp = Math.max(0, Math.min(CUM[MAXL], v | 0)); savePref(); label(); }
+    free: freeR, prem: premR, max: MAXL, need: need, cum: CUM, pending: pendingLevels, describe: describe, label: label, state: st, kfx: KFX, price: function () { return PRICE; }, owned: owned, buy: buy, setXp: function (v) { st().xp = Math.max(0, Math.min(CUM[MAXL], v | 0)); savePref(); label(); }
   };
   function init() { try { st(); label(); } catch (e) { } }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
