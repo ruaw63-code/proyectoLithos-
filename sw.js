@@ -1,5 +1,5 @@
-const C = 'lithos-v67';
-const F = ['./', './index.html', './net-web.js', './dungeon-art.js', './dungeon.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const C = 'lithos-v82';
+const F = ['./', './index.html', './net-web.js', './dungeon-art.js', './dungeon.js', './pase.js', './cuenta.js', './version.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 const ROOT = new URL('./', self.registration.scope).pathname;
 
 self.addEventListener('install', e => {
@@ -15,6 +15,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const u = new URL(e.request.url);
+  if (u.pathname.endsWith('/version.json')) return; // siempre directo de la red (así el aviso de actualización no se queda viejo)
   if (u.origin === location.origin && (e.request.mode === 'navigate' || u.pathname === ROOT || u.pathname.endsWith('/index.html'))) {
     // red primero para el HTML: así las correcciones llegan sin cambiar el número de versión; sin conexión usa la copia guardada
     e.respondWith(fetch(e.request).then(res => {

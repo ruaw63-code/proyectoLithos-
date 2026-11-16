@@ -241,11 +241,17 @@ const R=(a,b)=>Math.random()*(b-a)+a;
 /* ---------- entrada ---------- */
 const jb=$('jb'),js=$('js');let jid=null,jc={x:0,y:0},mv={x:0,y:0};const keys={};
 function jt(e){let dx=e.clientX-jc.x,dy=e.clientY-jc.y;{const q=rot*Math.PI/180,c0=Math.cos(q),s0=Math.sin(q);[dx,dy]=[c0*dx+s0*dy,-s0*dx+c0*dy]}const d=Math.hypot(dx,dy),a=Math.atan2(dy,dx),c=Math.min(d,38);
- js.style.transform=`translate(${Math.cos(a)*c}px,${Math.sin(a)*c}px)`;mv={x:Math.cos(a)*c/38,y:Math.sin(a)*c/38}}
+ js.style.transform=`translate(${Math.cos(a)*c}px,${Math.sin(a)*c}px)`;mv={x:Math.cos(a)*c/38,y:Math.sin(a)*c/38};if(Math.hypot(mv.x,mv.y)<.12)mv={x:0,y:0}}
 jb.addEventListener('pointerdown',e=>{jid=e.pointerId;jb.setPointerCapture(jid);const r=jb.getBoundingClientRect();jc={x:r.left+r.width/2,y:r.top+r.height/2};jt(e)});
 jb.addEventListener('pointermove',e=>{if(e.pointerId===jid)jt(e)});
 const je=e=>{if(e.pointerId===jid){jid=null;mv={x:0,y:0};js.style.transform='none'}};
 jb.addEventListener('pointerup',je);jb.addEventListener('pointercancel',je);
+/* joystick FLOTANTE (igual que en la mazmorra): aparece donde pongas el dedo en la mitad izquierda de la pantalla */
+function jbLocal(e){const st=$('stage'),r=st.getBoundingClientRect(),q=rot*Math.PI/180,c0=Math.cos(q),s0=Math.sin(q),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),sw=Math.abs(rot)===90?innerHeight:innerWidth,sh=Math.abs(rot)===90?innerWidth:innerHeight;return{lx:c0*dx+s0*dy+sw/2,ly:-s0*dx+c0*dy+sh/2,sw,sh}}
+cv.addEventListener('pointerdown',e=>{if(!running||e.pointerType==='mouse'||jid!==null||sellMode||repMode||placeMode||pm||wallMode)return;const p=jbLocal(e);if(p.lx>p.sw*.52||p.ly<p.sh*.2)return;
+ jid=e.pointerId;try{cv.setPointerCapture(jid)}catch(_){}jb.classList.add('fl');jb.style.left=(p.lx-56)+'px';jb.style.top=(p.ly-56)+'px';jb.style.bottom='auto';jc={x:e.clientX,y:e.clientY};jt(e)});
+cv.addEventListener('pointermove',e=>{if(e.pointerId===jid&&jb.classList.contains('fl'))jt(e)});
+const jfe=e=>{if(e.pointerId===jid&&jb.classList.contains('fl')){jid=null;mv={x:0,y:0};js.style.transform='none';jb.classList.remove('fl');jb.style.left=jb.style.top=jb.style.bottom=''}};cv.addEventListener('pointerup',jfe);cv.addEventListener('pointercancel',jfe);
 addEventListener('keydown',e=>keys[e.key.toLowerCase()]=1);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=0);
 /* ---------- reglas ---------- */
 const KHP=1000; // vida del Rey: sube o baja aquí
@@ -2389,4 +2395,4 @@ function drawShield(k,sh,t){const R=k.r+14,f=sh/120,nw=performance.now(),hit=Mat
   ctx=o;if(now-T0>DUR)fin();else requestAnimationFrame(fr)}
  requestAnimationFrame(fr)})();
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('sw.js').catch(()=>{});
-</script><script src="dungeon-art.js"></script><script src="dungeon.js"></script><script src="pase.js"></script><script src="cuenta.js"></script></body></html>
+</script><script src="dungeon-art.js"></script><script src="dungeon.js"></script><script src="pase.js"></script><script src="cuenta.js"></script><script src="version.js"></script></body></html>
