@@ -214,7 +214,7 @@ html,body{touch-action:none;margin:0;width:100%;height:100%;overflow:hidden;back
   <div class="mc" id="mc-lan"><button class="mcb lan" id="mpbtn" onclick="lanOpen()"><span class="mci">🌐</span><b>Multijugador</b><small>Juega con amigos (online o en la misma red)</small></button></div>
  </div>
  <button class="mct" id="tutl2" style="display:none" onclick="pickMode('classic',1)">📖 Repetir el tutorial del Reino clásico</button>
- <div class="mrow"><button class="b mb" onclick="openTeams()"><span>🤝</span>Equipos</button><button class="b mb" onclick="openSkins()"><span>🎨</span>Aspectos</button><button class="b mb" onclick="openShop()"><span>🛒</span>Tienda</button><button class="b mb" onclick="PASE.open()"><span>🏅</span><b id="psb">Pase</b></button><button class="b mb" onclick="openAch()"><span>🏆</span>Logros</button><button class="b mb" onclick="openSnd()"><span>🔊</span>Sonido</button></div>
+ <div class="mrow"><button class="b mb" onclick="openTeams()"><span>🤝</span>Equipos</button><button class="b mb" onclick="openSkins()"><span>🎨</span>Aspectos</button><button class="b mb" onclick="openShop()"><span>🛒</span>Tienda</button><button class="b mb" onclick="PASE.open()"><span>🏅</span><b id="psb">Pase</b></button><button class="b mb" onclick="ACC.open()"><span>👤</span><b id="accb">Iniciar sesión</b></button><button class="b mb" onclick="openAch()"><span>🏆</span>Logros</button><button class="b mb" onclick="openSnd()"><span>🔊</span>Sonido</button></div>
  <button class="b mb" id="cmdbtn" style="display:none" onclick="openCmd()">🔐 Comandos</button>
  <button class="b mb" id="quit" style="display:none">🚪 Salir de la partida</button>
  <div class="tips">Mueve a tu Rey con el joystick y recoge monedas 🪙. Para conseguir 🪨, párate junto a una piedra y pulsa ⛏️ Minar.<br>Mantén pulsado cualquier icono de la barra para ver su nombre. 💾 Tu partida se guarda sola.</div>
@@ -1304,7 +1304,7 @@ for(const k of Object.keys(pref.pk))if(!(pref.pk[k]>0))delete pref.pk[k];else pr
 if(!pref.eq||typeof pref.eq!=='object')pref.eq={};['g','x','d'].forEach(t=>{if(typeof pref.eq[t]!=='string'||!pref.vc[pref.eq[t]])pref.eq[t]=''});
 if(!pref.vd||typeof pref.vd!=='object'||!pref.vd.n)pref.vd={d:'',n:{}};if(typeof pref.pe!=='string')pref.pe='';if(!pref.bs||typeof pref.bs!=='object')pref.bs=null;
 if(pref.st&&pref.st.tut||readSave())pref.td.classic=1;zUser=Math.max(.45,Math.min(1.6,+pref.zu||1));zAuto=pref.za!==false;
-const savePref=()=>{try{localStorage.setItem(PREF_KEY,JSON.stringify(pref))}catch(e){}};
+const savePref=()=>{try{localStorage.setItem(PREF_KEY,JSON.stringify(pref))}catch(e){}try{if(window.ACC)ACC.dirty()}catch(e){}};
 const KF=['p','name','col','x','y','a','fa','g','lv','hp','max','score','s','sta','ex','unl','ogre','wx','wy','hx','hy','sk'];
 function snap(){const ki=new Map(kings.map((k,i)=>[k,i])),now=performance.now(),uf=u=>({t:u.t,x:u.x,y:u.y,hp:u.hp,max:u.max,boss:u.boss?1:0,hx:u.hx,hy:u.hy}),bt={};
  for(const t in bossT)bt[t]=Math.max(0,bossT[t]-now);
@@ -2389,4 +2389,4 @@ function drawShield(k,sh,t){const R=k.r+14,f=sh/120,nw=performance.now(),hit=Mat
   ctx=o;if(now-T0>DUR)fin();else requestAnimationFrame(fr)}
  requestAnimationFrame(fr)})();
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('sw.js').catch(()=>{});
-</script><script src="dungeon-art.js"></script><script src="dungeon.js"></script><script src="pase.js"></script></body></html>
+</script><script src="dungeon-art.js"></script><script src="dungeon.js"></script><script src="pase.js"></script><script src="cuenta.js"></script></body></html>
