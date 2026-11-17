@@ -27,10 +27,11 @@
     if (cache[m] && !force && Date.now() - cache[m].at < 20000) return render();
     loading = 1; errTxt = ''; render();
     ACC.call('GET', '/top?mode=' + m + '&u=' + encodeURIComponent(ACC.user()), null, 70000).then(function (r) {
-      loading = 0; if (r.status === 200) cache[m] = { d: r, at: Date.now() }; else errTxt = r.err || 'No se pudo cargar la clasificación'; render();
+      loading = 0; if (r.status === 200 && Array.isArray(r.list)) cache[m] = { d: r, at: Date.now() }; else if (r.status === 200 || r.status === 404) errTxt = 'El servidor aún no tiene la clasificación: falta subir el accounts.js nuevo a Render (o esperar a que termine de actualizarse).'; else errTxt = r.err || 'No se pudo cargar la clasificación'; render();
     });
   }
-  function render() {
+  function render() { try { render0(); } catch (e) { try { var o = $('topo'); if (o) { o.style.display = 'flex'; o.innerHTML = '<div class="tpb"><button class="b" id="top-x" style="margin:0 0 6px auto;display:block">✕ Cerrar</button><div class="topm">❌ Error: ' + esc(e && e.message || e) + '</div></div>'; $('top-x').onclick = close; } } catch (e2) { } } }
+  function render0() {
     css(); var o = $('topo'); if (!o) { o = document.createElement('div'); o.id = 'topo'; o.addEventListener('click', function (e) { if (e.target === o) close(); }); document.body.appendChild(o); }
     o.style.display = 'flex'; var d = cache[mode] && cache[mode].d, user = window.ACC ? ACC.user() : '';
     var h = '<div class="tpb"><button class="b xb" id="top-x" style="position:static;margin:0 0 4px auto;display:block">✕ Cerrar</button><h3>🏆 Clasificación</h3><div class="topt">' + MODES.map(function (a) { return '<button class="b' + (a[0] === mode ? ' on' : '') + '" data-m="' + a[0] + '">' + a[1] + '</button>'; }).join('') + '</div>';
