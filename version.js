@@ -3,7 +3,7 @@
    (cambia a la vez version.js, version.json y sw.js; no los edites a mano por separado) */
 (function () {
   'use strict';
-  var LOCAL = { v: '1.1.0', b: 82 };          /* ← versión de ESTE archivo (la que tiene el jugador cargada) */
+  var LOCAL = { v: '1.2.0', b: 83 };          /* ← versión de ESTE archivo (la que tiene el jugador cargada) */
   window.LITHOS_VER = LOCAL;
   var $ = function (id) { return document.getElementById(id); }, busy = 0, bannerOn = 0;
 

@@ -214,7 +214,7 @@ html,body{touch-action:none;margin:0;width:100%;height:100%;overflow:hidden;back
   <div class="mc" id="mc-lan"><button class="mcb lan" id="mpbtn" onclick="lanOpen()"><span class="mci">🌐</span><b>Multijugador</b><small>Juega con amigos (online o en la misma red)</small></button></div>
  </div>
  <button class="mct" id="tutl2" style="display:none" onclick="pickMode('classic',1)">📖 Repetir el tutorial del Reino clásico</button>
- <div class="mrow"><button class="b mb" onclick="openTeams()"><span>🤝</span>Equipos</button><button class="b mb" onclick="openSkins()"><span>🎨</span>Aspectos</button><button class="b mb" onclick="openShop()"><span>🛒</span>Tienda</button><button class="b mb" onclick="PASE.open()"><span>🏅</span><b id="psb">Pase</b></button><button class="b mb" onclick="ACC.open()"><span>👤</span><b id="accb">Iniciar sesión</b></button><button class="b mb" onclick="openAch()"><span>🏆</span>Logros</button><button class="b mb" onclick="openSnd()"><span>🔊</span>Sonido</button></div>
+ <div class="mrow"><button class="b mb" onclick="openTeams()"><span>🤝</span>Equipos</button><button class="b mb" onclick="openSkins()"><span>🎨</span>Aspectos</button><button class="b mb" onclick="openShop()"><span>🛒</span>Tienda</button><button class="b mb" onclick="PASE.open()"><span>🏅</span><b id="psb">Pase</b></button><button class="b mb" onclick="ACC.open()"><span>👤</span><b id="accb">Iniciar sesión</b></button><button class="b mb" onclick="TOP.open()"><span>🥇</span><b>Clasificación</b></button><button class="b mb" onclick="openAch()"><span>🏆</span>Logros</button><button class="b mb" onclick="openSnd()"><span>🔊</span>Sonido</button></div>
  <button class="b mb" id="cmdbtn" style="display:none" onclick="openCmd()">🔐 Comandos</button>
  <button class="b mb" id="quit" style="display:none">🚪 Salir de la partida</button>
  <div class="tips">Mueve a tu Rey con el joystick y recoge monedas 🪙. Para conseguir 🪨, párate junto a una piedra y pulsa ⛏️ Minar.<br>Mantén pulsado cualquier icono de la barra para ver su nombre. 💾 Tu partida se guarda sola.</div>
@@ -649,7 +649,7 @@ function renderTeams(){const box=$('tpl');box.innerHTML='';const mk=(tg,cl,tx)=>
   if(!mine&&t.members.length<TEAM_MAX){const jb=mk('button','b','Unirme');jb.onclick=()=>{if(Math.random()<.8){joinTeam(P,t);toast('✅ '+t.leader.name+' aceptó tu solicitud')}else toast('❌ '+t.leader.name+' rechazó tu solicitud');ref()};r.appendChild(jb)}box.appendChild(r)});
  if(mine&&mine.leader===P&&mine.members.length<TEAM_MAX){const t2=mk('div','','Invitar a reyes sin equipo:');t2.style.margin='8px 0 2px';box.appendChild(t2);
   kings.filter(o=>!o.p&&!o.team).forEach(o=>{const r=mk('div','tr');r.appendChild(mk('span','','👑 '+o.name));const ib=mk('button','b','Invitar');ib.onclick=()=>{if(mine.members.length<TEAM_MAX&&Math.random()<.75){joinTeam(o,mine);toast('✅ '+o.name+' se unió a tu equipo')}else toast('❌ '+o.name+' rechazó la invitación');ref()};r.appendChild(ib);box.appendChild(r)})}}
-function die(){running=false;P.score=Math.round(P.score*(1+bsv('x')/100));best=Math.max(best,P.score);clearSave();const bn=bsD(dmScore(P.score));if(bn>0)gain(bn,1);pref.bs=null;savePref();$('sub').textContent='¡Has caído! '+(CM&&!TUT?'⏱️ '+Math.floor((performance.now()-tStart)/60000)+' min · 🏰 '+(P.cd||0)+' castillos destruidos · ':'')+'Puntos: '+P.score+' · Récord: '+best+(bn?' · +'+bn+' 💎':'');$('menu').style.display='flex';reset();setMenu()}
+function die(){running=false;P.score=Math.round(P.score*(1+bsv('x')/100));best=Math.max(best,P.score);try{if(!cheated&&!TUT&&!(mp&&mp.started)&&window.ACC)ACC.score(CM?'castle':'classic',P.score)}catch(e){}clearSave();const bn=bsD(dmScore(P.score));if(bn>0)gain(bn,1);pref.bs=null;savePref();$('sub').textContent='¡Has caído! '+(CM&&!TUT?'⏱️ '+Math.floor((performance.now()-tStart)/60000)+' min · 🏰 '+(P.cd||0)+' castillos destruidos · ':'')+'Puntos: '+P.score+' · Récord: '+best+(bn?' · +'+bn+' 💎':'');$('menu').style.display='flex';reset();setMenu()}
 function showMenu(){if(mp&&mp.started){lanOpen();return}running=false;$('sub').textContent='Pausa';setMenu();$('menu').style.display='flex';if(live&&P&&!P.dead)writeSave()}
 /* el botón ¡Jugar!/Continuar se define en la sección de guardado */
 {const mb=$('mine');mb.addEventListener('pointerdown',e=>{e.preventDefault();mb.setPointerCapture(e.pointerId);mineBtn(1)});['pointerup','pointercancel'].forEach(v=>mb.addEventListener(v,()=>mineBtn(0)))}
@@ -1630,6 +1630,7 @@ function renderCmd(){const b=$('cmb');b.innerHTML='';
   const go=()=>{const w=Math.ceil((cmdLock-Date.now())/1000);if(w>0){cmdLog='🔒 Espera '+w+' s';renderCmd();return}const k=codeKind(i.value);
    if(k==='dev'){if(netc()){cmdLog='Los comandos solo los puede usar el anfitrión o en partida individual.';renderCmd();return}cmdAuth=true;cmdTry=0;cmdLog='';renderCmd()}
    else if(k==='beta'){cmdTry=0;cmdLog='';if(fdUsed(btCode)){cmdLog='✅ Ese código ya fue canjeado';renderCmd();return}redeemBT()}
+   else if(window.CODES&&String(i.value).replace(/[^A-Za-z0-9]/g,'').length>=4){const v=i.value;i.value='';cmdLog='⏳ Comprobando código…';renderCmd();CODES.redeem(v).then(r=>{cmdLog=r.msg;if(r.bad&&++cmdTry>=4){cmdTry=0;cmdLock=Date.now()+30000;cmdLog='🔒 Demasiados intentos: espera 30 s'}renderCmd()})}
    else{i.value='';cmdLog='❌ Código incorrecto';if(++cmdTry>=3){cmdTry=0;cmdLock=Date.now()+30000;cmdLog='🔒 Demasiados intentos: espera 30 s'}renderCmd()}};
   i.onkeydown=e=>{if(e.key==='Enter')go();e.stopPropagation()};i.oninput=()=>{i.value=i.value.replace(/[^A-Za-z0-9-]/g,'');};b.appendChild(bt('Entrar',go,'width:100%'));b.appendChild(bt('👁 Mostrar / ocultar',()=>{i.type=i.type==='password'?'text':'password'},'width:100%;margin-top:4px;padding:4px;font-size:11px;opacity:.8'));fdInboxUi(b,i,go);setTimeout(()=>i.focus(),50);return}
  const CMD_UI={dg:[
@@ -1652,7 +1653,7 @@ function renderCmd(){const b=$('cmb');b.innerHTML='';
  q.onkeydown=e=>{if(e.key==='Enter'){run(q.value);q.value=''}else if(e.key==='ArrowUp'&&cmdHist.length)q.value=cmdHist[cmdHist.length-1];e.stopPropagation()};
  const g=el('div','mrow'),bs='margin:2px;padding:6px 8px;font-size:11px';
  TB[cmdTab][1].forEach(([t,c])=>g.appendChild(bt(t,()=>{if(/\s$/.test(c)){q.value=c;q.focus()}else run(c)},bs)));b.appendChild(g);
- const f=el('div','mrow');f.style.marginTop='4px';[['📖 Lista completa',()=>run('ayuda')],['🔁 Repetir último',()=>{if(cmdHist.length)run(cmdHist[cmdHist.length-1])}],['🧹 Limpiar',()=>{o.textContent=cmdLog=''}]].forEach(([t,fn])=>f.appendChild(bt(t,fn,'margin:2px;padding:5px 8px;font-size:11px;opacity:.9')));b.appendChild(f)}
+ const f=el('div','mrow');f.style.marginTop='4px';[['🎟️ Generador de códigos',()=>{try{CODES.open()}catch(e){toast('Falta codigos.js')}}],['📖 Lista completa',()=>run('ayuda')],['🔁 Repetir último',()=>{if(cmdHist.length)run(cmdHist[cmdHist.length-1])}],['🧹 Limpiar',()=>{o.textContent=cmdLog=''}]].forEach(([t,fn])=>f.appendChild(bt(t,fn,'margin:2px;padding:5px 8px;font-size:11px;opacity:.9')));b.appendChild(f)}
 /* ---- monitor de FPS: fps1 lo enciende, fps2 lo apaga (no desactiva recompensas) ---- */
 const FPSM=(()=>{let el=null,on=false,raf=0,last=0,acc=0,fr=0,worst=0,spikes=0,evt='',evtT=0,upd=0;
  const ctx=()=>{try{return window.DG&&DG.on&&DG.ctx?DG.ctx():'reino'}catch(e){return''}};
@@ -1671,7 +1672,7 @@ function cmdRun(txt){const a=String(txt).trim().toLowerCase().replace(/^\//,'').
  if(fc==='fps1'){FPSM.start();return'📈 Monitor de FPS encendido (abajo al centro). Escribe fps2 para apagarlo'}
  if(fc==='fps2'){FPSM.stop();return'📈 Monitor de FPS apagado'}{const dg=!!(window.DG&&DG.on),mz=c==='mz'||c==='mazmorra';if(dg||mz){if(!dg)return'🗝️ Estos comandos solo funcionan dentro de la mazmorra';return DG.cmd(mz?a.slice(1):a)}}if(!P||P.dead)return'No hay partida activa';if(['oro','piedra','diamantes','gemas','tropas','nivel','jefes','ogro','esqueletos','lluvia','gema','skins','vales','secreto','pob'].includes(c))cheated=1;let r;
  switch(c){
-  case'ayuda':case'help':return'Reino: oro N · piedra N · diamantes N · pob N · curar · nivel · tropas lancero|arquero|mago|sanador N · esqueletos · ogro · jefes · lluvia · gema · centro · limpiar · skins · vales · secreto · dios · estado · borrar (💎 a 0)\nMazmorra (dentro de ella o con mz): escribe mz ayuda\nfps1 = monitor de FPS · fps2 = apagarlo\nsalir = cerrar la sesión de comandos (pide código de nuevo)';
+  case'ayuda':case'help':return'Reino: xpase N (XP del pase) · oro N · piedra N · diamantes N · pob N · curar · nivel · tropas lancero|arquero|mago|sanador N · esqueletos · ogro · jefes · lluvia · gema · centro · limpiar · skins · vales · secreto · dios · estado · borrar (💎 a 0)\nMazmorra (dentro de ella o con mz): escribe mz ayuda\nfps1 = monitor de FPS · fps2 = apagarlo\nsalir = cerrar la sesión de comandos (pide código de nuevo)';
   case'estado':return'🪙 '+Math.floor(P.g)+' · 🪨 '+Math.floor(P.s)+' · ⚔️ '+P.units.length+' tropas · ❤️ '+Math.round(P.hp)+'/'+Math.round(P.max)+' · 💎 '+pref.dm+' · dios '+(god?'sí':'no');
   case'tropas':{const m={lancero:'soldier',soldado:'soldier',arquero:'archer',mago:'mage',sanador:'healer',soldier:'soldier',archer:'archer',mage:'mage',healer:'healer'}[a[1]],k=Math.max(1,Math.min(50,Math.floor(+a[2])||5));if(!m){r='❓ Tipos: lancero, arquero, mago, sanador';break}P.lvs[m]=Math.max(1,P.lvs[m]);for(let i=0;i<k;i++){const an=i/k*TAU;P.units.push(mkUnit(P,m,P.x+Math.cos(an)*50,P.y+Math.sin(an)*50))}r='⚔️ +'+k+' '+a[1];break}
   case'centro':P.x=W/2;P.y=W/2;r='📍 Estás en el centro del mapa';break;
@@ -1688,6 +1689,7 @@ function cmdRun(txt){const a=String(txt).trim().toLowerCase().replace(/^\//,'').
   case'skins':SKINS.forEach(s=>{if(!s.fd&&!pref.own.includes(s.id))pref.own.push(s.id)});savePref();r='🎨 Todas las skins desbloqueadas';break;
   case'vales':['r','g','x','d'].forEach(t=>{for(let i=0;i<8;i++)giveV(t,i)});savePref();r='🎫 +1 vale de cada tipo y rareza';break;
   case'secreto':giveV('r',8);giveV('g',8);savePref();r='✨ Vales secretos';break;
+  case'xpase':case'xppase':case'pasexp':{if(!window.PASE){r='❓ El pase no está cargado';break}const q=n||500;PASE.setXp(PASE.state().xp+q);r='🏅 +'+q+' XP del pase (nivel '+PASE.level()+')';break}
   case'dios':god=!god;r=god?'🛡️ Modo dios ACTIVADO':'🛡️ Modo dios desactivado';break;
   case'pob':P.mpop=Math.max(10,n||50);r='👥 Población máxima: '+P.mpop;break;
   case'limpiar':NE.units=NE.units.filter(u=>u.boss);r='☠️ Neutrales eliminados (los jefes se quedan)';break;
@@ -2395,4 +2397,4 @@ function drawShield(k,sh,t){const R=k.r+14,f=sh/120,nw=performance.now(),hit=Mat
   ctx=o;if(now-T0>DUR)fin();else requestAnimationFrame(fr)}
  requestAnimationFrame(fr)})();
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('sw.js').catch(()=>{});
-</script><script src="dungeon-art.js"></script><script src="dungeon.js"></script><script src="pase.js"></script><script src="cuenta.js"></script><script src="version.js"></script></body></html>
+</script><script src="dungeon-art.js"></script><script src="dungeon.js"></script><script src="pase.js"></script><script src="cuenta.js"></script><script src="tabla.js"></script><script src="codigos.js"></script><script src="version.js"></script></body></html>
