@@ -29,6 +29,7 @@
       { id: 'tskin', n: '🛡️ Aspecto de tropas', f: [{ k: 'id', l: 'Aspecto', t: 'sel', o: tSkinList() }] },
       { id: 'weapon', n: '⚔️ Arma de mazmorra', f: [{ k: 'id', l: 'Arma', t: 'sel', o: wp }, { k: 'q', l: 'Calidad', t: 'sel', o: QN.map(function (q, i) { return [String(i), i + ' · ' + q]; }) }] },
       { id: 'gear', n: '🎽 Equipo de mazmorra', f: [{ k: 'fl', l: 'Nivel de piso (1-40)', t: 'num', d: 10 }, { k: 'n', l: 'Piezas', t: 'num', d: 1 }] },
+      { id: 'mod', n: '🛡️ Equipo Mod', f: [{ k: 'id', l: 'Pieza', t: 'sel', o: [['all', 'Set completo (4 piezas)'], ['helm', 'Casco Mod'], ['armor', 'Armadura Mod'], ['amulet', 'Amuleto Mod'], ['boots', 'Botas Mod']] }] },
       { id: 'fdw', n: '🏺 Arma de Fundador', f: [{ k: 'id', l: 'Arma', t: 'sel', o: fdw }] },
       { id: 'pet', n: '🐾 Mascota de mazmorra', f: [{ k: 'id', l: 'Mascota', t: 'sel', o: pets }] },
       { id: 'soul', n: '✨ Esencia de alma', f: [{ k: 'n', l: 'Cantidad', t: 'num', d: 1000 }] },
@@ -62,6 +63,7 @@
       case 'tskin': if (!Array.isArray(pref.tow)) pref.tow = []; if (pref.tow.indexOf(r.id) < 0) pref.tow.push(r.id); return '🛡️ Aspecto de tropas: ' + r.id;
       case 'weapon': if (DG.giveWeapon(r.id, Math.max(0, Math.min(6, r.q | 0)), null)) return '⚔️ ' + r.id + ' ' + QN[r.q | 0]; if (!quiet) queue(r); return '⚔️ Arma pendiente (mochila llena)';
       case 'gear': { var ok = 0, k = Math.min(n, 20); for (var i = 0; i < k; i++) { if (DG.giveGear(Math.max(1, Math.min(40, r.fl | 0 || 10)), .1)) ok++; else { if (!quiet) queue({ k: 'gear', fl: r.fl, n: 1 }); } } return '🎽 Equipo ×' + ok + (ok < k ? ' (resto pendiente: mochila llena)' : ''); }
+      case 'mod': { var gm = DG.giveMod(r.id), tot = r.id === 'all' ? 4 : 1; if (gm < tot && !quiet) { var rest = tot - gm; if (r.id === 'all') { var have = gm; ['helm', 'armor', 'amulet', 'boots'].slice(have).forEach(function (s) { queue({ k: 'mod', id: s }); }); } else queue(r); } return '🛡️ Equipo Mod ×' + gm + (gm < tot ? ' (resto pendiente: mochila llena)' : ''); }
       case 'fdw': { var F = pref.fd = (pref.fd && typeof pref.fd === 'object') ? pref.fd : {}; F.own = F.own || {}; F.seal = F.seal || {}; if (FD_IDS.indexOf(r.id) < 0) return null; F.own[r.id] = 1; if (F.seal[r.id] === undefined) F.seal[r.id] = 0; try { DG.fdSync(); } catch (e) { } return '🏺 Arma de Fundador: ' + r.id; }
       case 'pet': return DG.unlockPet(r.id) ? '🐾 Mascota: ' + r.id : null;
       case 'soul': DG.addSouls(n); return '✨ +' + n + ' esencia';

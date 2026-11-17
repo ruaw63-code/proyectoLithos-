@@ -110,7 +110,7 @@ const boxEl=()=>$('dgp');
 function closeMenu(){boxEl().style.display='none';D.paused=false;D.shopping=0;lastN=performance.now()}
 const rc=q=>RAR[q].c;
 function wCard(i){const f=wFull(i),cdv=(1000/(f.cd/((D.on&&hero)?hero.rateM:1))).toFixed(1),el=i.el?ELS[i.el]:null;return'<div class="dgi"><i>'+wImg(i,46)+'</i><div><b style="color:'+rc(i.q)+'">'+wName(i)+'</b><small>'+RAR[i.q].n+' · '+(f.k==='melee'?'Cuerpo a cuerpo':f.k==='thrust'?'Estocada':f.k==='bow'?'Arco':f.k==='gun'?'Arma de fuego':'Magia')+'</small><small>Daño '+Math.round(f.dm)+(f.pellets?' x'+f.pellets:'')+' · '+cdv+' ataques/s</small>'+(el?'<small style="color:'+el.c+'">'+el.i+' '+el.n+': '+Math.round(elP(i.elq)*100)+'% de activarse</small>':'')+(i.fx?'<small style="color:#ffb347">'+(i.fx==='explode'?'🧨 Los enemigos que mata explotan':'↩️ Sus proyectiles rebotan')+'</small>':'')+(i.fd?'<small style="color:#ffe27a">🏺 Arma de Fundador · si se pierde, regresa en 10 min</small><small style="color:#ffe27a">⭐ Nv.'+i.lv+(i.lv>=FD_MAXLV?' (máximo)':' · '+(i.xp|0)+'/'+fdNeed(i.lv)+' bajas para subir')+'</small>':'')+(f.slam?'<small>Golpe sísmico en área</small>':'')+(f.homing?'<small>Proyectiles teledirigidos</small>':'')+'</div></div>'}
-function gCard(g){let m='';for(const k in g.m)m+='<small>'+(MT[k]?MT[k](g.m[k]):k)+'</small>';return'<div class="dgi"><i>'+g.i+'</i><div><b style="color:'+rc(g.q)+'">'+g.n+'</b><small>'+GSLOT[g.t]+' · '+RAR[g.q].n+'</small>'+m+'</div></div>'}
+function gCard(g){let m='';for(const k in g.m)m+='<small>'+(MT[k]?MT[k](g.m[k]):k)+'</small>';return'<div class="dgi"><i>'+gIc(g,40)+'</i><div><b style="color:'+rc(g.q)+'">'+g.n+'</b><small>'+GSLOT[g.t]+' · '+RAR[g.q].n+'</small>'+m+'</div></div>'}
 function lootStart(c){const h=hero,q=c.q||0,fl=D.floor;if(q>=1)soulGain(q>=3?60:q===2?15:8);const gold=Math.round(ri(10,18)*(1+fl*.5)*(1+q*.7)*h.goldM);h.coins+=gold;D.coinsT+=gold;sfx('coin');num(h.x,h.y-52,'+'+gold+' 🪙','#ffd84a',true);
  const Q=[];if(Math.random()<.7+q*.1)Q.push({t:'w',w:rollWeapon(fl,q*.12)});if(Math.random()<.4+q*.1)Q.push({t:'g',g:rollGear(fl,q*.12)});if(!Q.length)Q.push({t:'w',w:rollWeapon(fl,q*.12)});if(Math.random()<.28+q*.2)Q.push({t:'r'});if(c.cards)Q.push({t:'c'});
  D.paused=true;D.lootQ=Q;nextLoot(gold)}
@@ -205,7 +205,7 @@ function shopShow(s){const b=boxEl(),h=hero;D.shopping=1;
  let html='<div class="tpb dgc"><h3>🛒 Tienda del mercader</h3><div class="dgg">🪙 '+h.coins+'</div><p class="dgq">Toca lo que quieras comprar</p><div class="dgsg">';
  s.items.forEach((it,i)=>{let ic,nm,ds,bc='#cfd8dc';
   if(it.t==='w'){const f=wFull(it.w);ic=f.i;nm=wName(it.w);ds=RAR[it.w.q].n+' · Daño '+Math.round(f.dm)+(f.pellets?'x'+f.pellets:'');bc=rc(it.w.q)}
-  else if(it.t==='g'){ic=it.g.i;nm=it.g.n;ds=GSLOT[it.g.t]+' · '+Object.keys(it.g.m).map(k=>MT[k]?MT[k](it.g.m[k]):k).join(', ');bc=rc(it.g.q)}
+  else if(it.t==='g'){ic=gIc(it.g,34);nm=it.g.n;ds=GSLOT[it.g.t]+' · '+Object.keys(it.g.m).map(k=>MT[k]?MT[k](it.g.m[k]):k).join(', ');bc=rc(it.g.q)}
   else if(it.t==='c'){ic=it.b.i;nm=it.b.n;ds=it.b.d;bc=rc(Math.min(3,it.b.q+1))}
   else if(it.t==='p'){ic='🧪';nm='Poción';ds='Cura toda tu vida y recarga el escudo';bc='#ff7a8a'}
   else{const d=PET[it.k];ic=d.i;nm=d.n+' (mascota)';ds=d.d+' · ❤ '+Math.round(d.hp*petMul(D.floor))+' · ⏳ Solo dura esta incursión (no se desbloquea)';bc='#7be07b'}
@@ -231,6 +231,8 @@ function DI(){let L=pref.dgi;if(!L||typeof L!=='object')L=pref.dgi={};
  for(const k in GSLOT)if(L.eq.g[k]===undefined)L.eq.g[k]=null;
  if(!L.runes)L.runes={};ELK.forEach(k=>{if(!Array.isArray(L.runes[k]))L.runes[k]=[0,0,0,0,0,0];while(L.runes[k].length<6)L.runes[k].push(0)});if(!L.fdw||typeof L.fdw!=='object')L.fdw={};L.cap=42;if(!Array.isArray(L.store))L.store=[];if(!Array.isArray(L.pets))L.pets=[];L.souls=Math.max(0,Math.floor(+L.souls)||0);if(!Array.isArray(L.hang))L.hang=[];while(L.hang.length<6)L.hang.push(null);
  L.bag.forEach(it=>{if(it&&it.k==='g')cleanGear(it.g);if(it&&it.k==='w'&&it.w.b0){it.w.el=it.w.b0.el;it.w.elq=it.w.b0.elq;it.w.fx=it.w.b0.fx;delete it.w.b0}});for(const k in L.eq.g)cleanGear(L.eq.g[k]);if(!(D.on&&!D.over&&!D.hub))L.eq.w.forEach(w=>{if(w&&w.b0){w.el=w.b0.el;w.elq=w.b0.elq;w.fx=w.b0.fx;delete w.b0}});return L}
+const gIc=(g,px)=>{px=px||38;try{const u=window.GEARART&&GEARART.icon(g.n,rc(g.q),96);return u?'<img class="wic" width="'+px+'" height="'+px+'" src="'+u+'" alt="">':g.i}catch(e){return g.i}};
+const MODSET={helm:{t:'helm',n:'Casco Mod',i:'🪖',q:6,m:{max:150,dmgM:.35,crit:.25}},armor:{t:'armor',n:'Armadura Mod',i:'🦺',q:6,m:{max:250,shMax:6,dmgM:.2}},amulet:{t:'amulet',n:'Amuleto Mod',i:'💠',q:6,m:{vamp:5,goldM:.6,rateM:.3,crit:.2}},boots:{t:'boots',n:'Botas Mod',i:'👢',q:6,m:{spdM:.3,dashM:-.4,rateM:.2,max:80}}};
 const wImg=(i,px)=>{px=px||38;const u=DGART.wIcon(i.id,Object.assign({id:i.id},WP[i.id]),i.q,i.el,rc(i.q));return u?'<img class="wic" width="'+px+'" height="'+px+'" src="'+u+'" alt="">':WP[i.id].i};
 const bagFree=()=>DI().cap-DI().bag.length;
 function bagAdd(it){const L=DI();if(L.bag.length>=L.cap)return false;L.bag.push(it);try{savePref()}catch(e){}return true}
@@ -299,7 +301,7 @@ function forgeGame(f,s){const b=boxEl(),h=hero,i=h.wps[s],q=i.q,cost=FGC(i);if(h
 const LDS=[['helm','Casco'],['armor','Armadura'],['boots','Botas'],['w0','Arma 1'],['w1','Arma 2'],['amulet','Amuleto']];
 let LD={sel:null,confirm:0},LH=null,LA=0;
 const petImg=(k,px)=>{px=px||62;try{const u=DGART.petIcon(k,px);if(u)return'<img class="wic" width="'+px+'" height="'+px+'" src="'+u+'" alt="">'}catch(e){}return PET[k].i};
-const itCard=it=>it.k==='w'?wCard(it.w):gCard(it.g),itIcon=(it,px)=>it.k==='w'?wImg(it.w,px||38):it.g.i,itQ=it=>it.k==='w'?it.w.q:it.g.q,itEl=it=>it.k==='w'&&it.w.el?'<u>'+ELS[it.w.el].i+'</u>':'';
+const itCard=it=>it.k==='w'?wCard(it.w):gCard(it.g),itIcon=(it,px)=>it.k==='w'?wImg(it.w,px||38):gIc(it.g,px||38),itQ=it=>it.k==='w'?it.w.q:it.g.q,itEl=it=>it.k==='w'&&it.w.el?'<u>'+ELS[it.w.el].i+'</u>':'';
 function eqGet(k){const L=DI();if(k==='w0'||k==='w1'){const w=L.eq.w[+k[1]];return w?{k:'w',w}:null}const g=L.eq.g[k];return g?{k:'g',g}:null}
 function eqSet(k,it){const L=DI();if(k==='w0'||k==='w1')L.eq.w[+k[1]]=it?it.w:null;else L.eq.g[k]=it?it.g:null}
 function openLoadout(){if(D.on)return;try{fdSync()}catch(e){}openLoadoutX('bag',null)}
@@ -758,7 +760,7 @@ function hud(){const h=hero,set=(id,v)=>{if(hudC[id]!==v){hudC[id]=v;const e=$(i
  set('dgco','🪙 '+h.coins);set('dgfl',D.hub?'🏠 Sala del héroe':th.n+' · Piso '+D.floor+' · Sala '+(Math.max(0,rooms.indexOf(D.room||rooms[0]))+1)+'/'+rooms.length+(D.co?' · 👥 '+HS().filter(q=>!q.gone).length+' (+'+Math.round((coMul()-1)*100)+'%)':' · 🎒 '+D.pouch.length+'/'+POUCH_CAP));
  const w=curW(),ci=h.wps[h.wi]||h.wps[0]||h.wps[1];set('dgatk',ci?wImg(ci,44):w.i);const sw=$('dgsw');if(sw)sw.style.display=(h.wps[0]&&h.wps[1])?'':'none';
  let ws='';for(let q=0;q<2;q++){const i=h.wps[q];ws+='<span class="dgws'+(q===h.wi?' on':'')+'"'+(i?' style="border-color:'+rc(i.q)+'"':'')+'>'+(i?wImg(i,26)+(i.el?'<u>'+ELS[i.el].i+'</u>':''):'·')+'</span>'}set('dgws',ws);
- let eq='';for(const k in h.gear){const g2=h.gear[k];eq+='<span class="dgeqs"'+(g2?' style="border-color:'+rc(g2.q)+'"':'')+'>'+(g2?g2.i:'·')+'</span>'}for(const p of D.pets)eq+='<span class="dgeqs dgpet'+(p.down?' dn':'')+'">'+PET[p.k].i+'<b style="width:'+Math.round(clamp(p.hp/p.max,0,1)*100)+'%"></b></span>';set('dgeq',eq);
+ let eq='';for(const k in h.gear){const g2=h.gear[k];eq+='<span class="dgeqs"'+(g2?' style="border-color:'+rc(g2.q)+'"':'')+'>'+(g2?gIc(g2,20):'·')+'</span>'}for(const p of D.pets)eq+='<span class="dgeqs dgpet'+(p.down?' dn':'')+'">'+PET[p.k].i+'<b style="width:'+Math.round(clamp(p.hp/p.max,0,1)*100)+'%"></b></span>';set('dgeq',eq);
  const dd=$('dgdash');if(dd){const p=h.dashCd>0?Math.round(h.dashCd/(950*Math.max(.25,h.dashM))*100):0;dd.style.setProperty('--cd',p+'%')}
  const bb=$('dgboss');if(bb){if(D.boss&&!D.boss.dead){bb.style.display='block';bb.firstChild.style.width=Math.max(0,D.boss.hp/D.boss.max*100)+'%';const bn=bb.querySelector('b');if(bn&&bn.dataset.t!==D.boss.t){bn.dataset.t=D.boss.t;bn.textContent=EN[D.boss.t].n}}else bb.style.display='none'}}
 D.ctx=()=>{const b=D.boss&&!D.boss.dead?D.boss.t+'/'+D.boss.st+(D.boss.kind?'/'+D.boss.kind:''):'-';return'p'+D.floor+' '+b+' e'+E.length+' pt'+PT.length};
@@ -1274,7 +1276,7 @@ function rarArg(v){const x=nrm(v);if(x in MZR)return MZR[x];const n=Math.floor(+
 function mkGearOf(slot,q){const T=pick(GT.filter(x=>x.t===slot)),m={};for(const k in T.m){const v=T.m[k]*RAR[q].m;m[k]=Number.isInteger(T.m[k])?Math.max(1,Math.round(v)):Math.round(v*100)/100}
  if(q>=2&&Math.random()<.75){const x=pick(GXT),k=Object.keys(x)[0];m[k]=(m[k]||0)+x[k]}return{t:T.t,n:T.n,i:T.i,q,m}}
 function freeSpot(r){for(let i=0;i<24;i++){const a=rnd(0,TAU),x=hero.x+Math.cos(a)*r,y=hero.y+Math.sin(a)*r;if(!solidT(Math.floor(x/T),Math.floor(y/T)))return[x,y]}return[hero.x,hero.y]}
-const CHEAT_CMDS=new Set(['arma','equipo','mejora','mascota','botin','cofre','oro','vidamax','dano','daño','velocidad','inmune']);
+const CHEAT_CMDS=new Set(['arma','equipo','modset','mejora','mascota','botin','cofre','oro','vidamax','dano','daño','velocidad','inmune']);
 D.cmd=function(a){const c=nrm(a[0]),arg=a.slice(1),v0=arg[0],nv=+String(v0).replace(',','.'),has=v0!==undefined&&isFinite(nv),N=(df,mn,mx)=>has?clamp(nv,mn,mx):df;
  if(c==='xpase'||c==='xppase'||c==='pasexp'){const n=Math.floor(N(500,1,1e7));if(!window.PASE)return'❓ El pase no está cargado';const S=PASE.state();PASE.setXp(S.xp+n);return'🏅 +'+n+' XP del pase (nivel '+PASE.level()+')'}
  if(c==='almas'||c==='esencia'){const L=DI(),n=Math.floor(N(SOUL_PET,1,1e6));L.souls+=n;try{savePref()}catch(e){}return'✨ +'+n+' Esencia de alma (total '+L.souls+')'}
@@ -1299,6 +1301,7 @@ D.cmd=function(a){const c=nrm(a[0]),arg=a.slice(1),v0=arg[0],nv=+String(v0).repl
   case'arma':{const id=MZW[nrm(v0)]||(WP[nrm(v0)]?nrm(v0):null);if(!id){r='❓ Armas: '+Object.keys(MZW).join(', ');break}
    let q=0,el=null;for(const x of arg.slice(1)){const q2=rarArg(x);if(q2!==null)q=q2;else if(MZE[nrm(x)])el=MZE[nrm(x)];else if(ELS[nrm(x)])el=nrm(x)}
    D.cheated=1;const w=winst(id,q,el);equipW(h.wi,w);r='⚔️ '+wName(w)+' ('+RAR[q].n+') equipada';break}
+  case'modset':{const o=D.giveMod(nrm(v0)==='todo'||v0===undefined?'all':MZS[nrm(v0)]);r=o?'🛡️ Set Mod: '+o+' pieza(s) en tu mochila (equípalas desde la Sala del héroe)':'🎒 Mochila llena o pieza inválida. Piezas: casco, armadura, amuleto, botas, todo';break}
   case'equipo':{const slot=MZS[nrm(v0)];if(!slot){r='❓ Piezas: casco, armadura, amuleto, botas';break}const q=rarArg(arg[1]);const g2=mkGearOf(slot,q===null?1:q);equipG(g2);r='🛡️ '+g2.n+' ('+RAR[g2.q].n+') equipado';break}
   case'mejora':{const x=nrm(a.slice(1).join(' ')),b=BUFFS.find(q=>q.id===x||nrm(q.n)===x);if(!b){r='❓ Mejoras: '+BUFFS.map(q=>q.id).join(', ');break}applyBuff(b);sparks(h.x,h.y-16,'#ffd84a',14,4);r=b.i+' '+b.n+': '+b.d;break}
   case'mascota':{const k=MZP[nrm(v0)]||(PET[nrm(v0)]?nrm(v0):null);if(!k){r='❓ Mascotas: lobo, caballero, mago, dragon, nutria, golemfuego/hielo/rayo/veneno/agua';break}addPet(k);r=PET[k].i+' '+PET[k].n+' se une a ti';break}
@@ -1494,7 +1497,7 @@ function coPause(){const box=$('dgp'),host=D.co.role==='host';box.innerHTML='<di
 function coCMsg(m){switch(m.t){case'dgstart':coBegin(m);break;case'dgfloor':coCFloor(m);break;case'dgs':coCSnap(m);break;case'dgev':coCEv(m.e);break;
  case'dgcards':if(m.o&&m.o.length)coCardUI(m.o.map(o=>({id:o[0],i:o[1],n:o[2],d:o[3],q:o[4]})));else coCardClose();break;case'dgend':coResults(m);break}}
 Object.assign(D,{coHostStart,coAddPeer,coMsg,coCMsg,coLeft,coStop,coLoadout,coMul});
-D.unlockPet=k=>{if(!PET[k])return false;const L=DI();if(!L.pets.includes(k))L.pets.push(k);try{savePref()}catch(e){}return true};D.petList=()=>Object.keys(PET).filter(k=>!PET[k].fd).map(k=>[k,PET[k].i,PET[k].n]);D.xpAdd=n=>{const g=xpState();g.xp+=Math.max(0,Math.floor(n));try{savePref()}catch(e){}return g.xp};D.runeAdd=(k,t,n)=>{const L=DI();if(!L.runes[k]||t<0||t>5)return false;L.runes[k][t]+=Math.max(1,n|0);try{savePref()}catch(e){}return true};D.wpList=()=>Object.keys(WP).map(k=>[k,WP[k].i,WP[k].n]);
+D.openLd=()=>{if(!D.on)openLoadoutX('bag',null)};D.giveMod=sl=>{let n=0;const ks=sl==='all'?Object.keys(MODSET):(MODSET[sl]?[sl]:[]);for(const k of ks){const g=JSON.parse(JSON.stringify(MODSET[k]));if(bagAdd({k:'g',g}))n++}return n};D.modList=()=>Object.keys(MODSET).map(k=>[k,MODSET[k].n]);D.unlockPet=k=>{if(!PET[k])return false;const L=DI();if(!L.pets.includes(k))L.pets.push(k);try{savePref()}catch(e){}return true};D.petList=()=>Object.keys(PET).filter(k=>!PET[k].fd).map(k=>[k,PET[k].i,PET[k].n]);D.xpAdd=n=>{const g=xpState();g.xp+=Math.max(0,Math.floor(n));try{savePref()}catch(e){}return g.xp};D.runeAdd=(k,t,n)=>{const L=DI();if(!L.runes[k]||t<0||t>5)return false;L.runes[k][t]+=Math.max(1,n|0);try{savePref()}catch(e){}return true};D.wpList=()=>Object.keys(WP).map(k=>[k,WP[k].i,WP[k].n]);
 D.frame=frame;D.start=start;D.dbg=()=>({hero,E,rooms,D,PR,PK,map,MW,MH,T});D.mkShop=(x,y)=>mkShop(x,y);D.addPet=k=>addPet(k);D.dropFd=(t,n,v)=>{if(!D.on||D.hub||D.co||D.cheated||D.over||D.floor%EXIT_EVERY===0)return false;D.pend=D.pend||[];D.pend.push({t:t==='soul'?'fsoul':'fgem',n,v});return true};D.giveWeapon=(id,q,el)=>{try{if(!WP[id])return false;return bagAdd(winst(id,q|0,el||null))}catch(e){return false}};D.giveGear=(fl,b)=>{try{return bagAdd({k:'g',g:rollGear(fl||1,b||0)})}catch(e){return false}};D.bagFree=()=>{try{return bagFree()}catch(e){return 0}};D.killFx=(x,y,id)=>killFx({x,y,col:'#7a8',r:12},id);D.drawKF=(c,k,now)=>drawKF(k,c,now);D.KFX_LIFE=KFX_LIFE;D.addSouls=n=>{try{DI().souls=(DI().souls||0)+n;savePref()}catch(e){}};D.mk=(t,x,y)=>{const e=mkEnemy(t,x,y,1);E.push(e);return e};
 window.dgStart=start;
 })();
