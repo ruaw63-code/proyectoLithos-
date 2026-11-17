@@ -350,7 +350,7 @@
 
   window.PASE = {
     xp: xp, tick: tick, open: open, close: close, level: level, rewards: rewards, claim: claim, claimAll: claimAll,
-    free: freeR, prem: premR, max: MAXL, need: need, cum: CUM, pending: pendingLevels, describe: describe, label: label, state: st, kfx: KFX, price: function () { return PRICE; }, owned: owned, buy: buy, setXp: function (v) { st().xp = Math.max(0, Math.min(CUM[MAXL], v | 0)); savePref(); label(); }
+    grant: grant, unlockPremium: function () { st().own = 1; savePref(); label(); }, free: freeR, prem: premR, max: MAXL, need: need, cum: CUM, pending: pendingLevels, describe: describe, label: label, state: st, kfx: KFX, price: function () { return PRICE; }, owned: owned, buy: buy, setXp: function (v) { st().xp = Math.max(0, Math.min(CUM[MAXL], v | 0)); savePref(); label(); }
   };
   function init() { try { st(); label(); } catch (e) { } }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

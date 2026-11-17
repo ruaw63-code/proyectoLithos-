@@ -250,7 +250,17 @@
   function closeModal() { var o = $('acc'); if (o) o.style.display = 'none'; modalOpen = 0; }
   function open() { if (S.tok) ui = S.pendingCode ? 'code' : 'in'; else if (ui === 'in' || ui === 'pass' || ui === 'code' || ui === 'sec') ui = 'login'; msg = ''; render(); }
 
-  window.ACC = { open: open, close: closeModal, dirty: dirty, push: push, state: function () { return { u: S.u, tok: !!S.tok, rev: S.rev, dirty: S.dirty, status: status }; }, api: API };
-  function init() { label(); startup(); }
+  /* ---------- clasificación: envío de puntuaciones ---------- */
+  var scT = 0;
+  function flushScores() {
+    if (!S.tok || !S.ps) return; var modes = Object.keys(S.ps);
+    modes.forEach(function (m) { var v = S.ps[m]; req('POST', '/score', { mode: m, score: v }, 30000).then(function (r) { if (r.status === 200 || r.status === 400) { if (S.ps && S.ps[m] === v) { delete S.ps[m]; saveS(); } } }); });
+  }
+  function score(mode, val) {
+    val = Math.floor(+val); if (!(val >= 0)) return; if (!S.tok) return;
+    S.ps = S.ps || {}; if (!(S.ps[mode] >= val)) S.ps[mode] = val; saveS(); clearTimeout(scT); scT = setTimeout(flushScores, 2500);
+  }
+  window.ACC = { score: score, call: req, user: function () { return S.tok ? S.u : ''; }, open: open, close: closeModal, dirty: dirty, push: push, state: function () { return { u: S.u, tok: !!S.tok, rev: S.rev, dirty: S.dirty, status: status }; }, api: API };
+  function init() { label(); startup(); if (S.tok) setTimeout(function () { try { var b = pref.dg && pref.dg.best | 0; if (b > 0) score('dungeon', b * 10000); } catch (e) { } flushScores(); }, 6000); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
